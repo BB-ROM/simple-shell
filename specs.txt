@@ -1,7 +1,7 @@
 Things to follow:
-cruly braces - ex.
+curly braces - ex.
 
-// desciption of the function
+// description of the function
 int funct() {
                     <- empty space
     //some code...
@@ -11,4 +11,4 @@ int funct() {
 Keep functions short - one function - one responsibility
 
 please watch what files are being added to git - make sure you only add things
-you wrote - don't add anything from the clion project filesystem
+you wrote - don't add anything from the Clion project filesystem or makefile(?)
