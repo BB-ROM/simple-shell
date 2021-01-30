@@ -1,55 +1,49 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "prompt.h"
+//TODO:
+// - ctrl+d behaves fine with no input before it but when you start typing and
+//   then decide to press ctrl+d you have to do it twice
 
-int SIZE = 512;
-char DELIMITERS[] = " \t|><&;";
-char PROMPT[] = "==>";
+
+#include <stdlib.h>
+#include "prompt.h"
 
 int main() {
 
     // initialise state variables
-    char *input = malloc(sizeof(char)*SIZE);
+    char *input = new_input();
     char *tokens;
 
     while(1) {
-        print_prompt(PROMPT);
+        print_prompt();
+        get_input(input);
 
-        // handles ctrl+d
-        if(!get_input(input, SIZE))
+        // exits for ctrl+d
+        if(ctrl_d_typed())
             break;
 
-        // check for empty string
+        // handling of empty strings
+        remove_leading_whitespace(&input);
         if (input_is_empty(input)) {
             continue;
         }
 
-        // basically a length check - if the string has not exceed the maximum
-        // length (SIZE-2 characters to accomodate for \0 and \n) the last
-        // character should be the \n
+        // prompts the user if input is too big - max input length configurable
+        // in the config file
         if (input_too_large(input)) {
             clear_stdin();
             warn_user("Input too large - default max character limit is 512 "
-                      "characters (can be changed in config file");
-        } else {
-
-            process_input(input);
-
-            tokens = strtok(input, DELIMITERS);
-
-            // exits if exit is 1st word
-            if (strcmp(&tokens[0], "exit") == 0 ||
-                strcmp(&tokens[0], "EXIT") == 0)
-
-                break;
-
-            // iterate through tokens
-            while (tokens) {
-                printf("%s\n", tokens);
-                tokens = strtok(0, DELIMITERS);
-            }
+                      "characters (can be changed in config file)");
+            continue;
         }
+
+        // preprocessing done - actual starting point
+        tokens = get_tokens(input);
+
+        // handling of exit
+        if (check_for_exit(tokens))
+            break;
+
+        // iterate through tokens
+        process_tokens(tokens);
     }
 
     free(input);
