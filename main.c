@@ -37,6 +37,7 @@ int main() {
 
         // preprocessing done - actual starting point
         tokens = get_tokens(input);
+        fork_process(tokens);
 
         // handling of exit
         if (check_for_exit(tokens))
@@ -44,7 +45,10 @@ int main() {
 
         // iterate through tokens
         process_tokens(tokens);
+
     }
+
+
 
     free(input);
     return 0;

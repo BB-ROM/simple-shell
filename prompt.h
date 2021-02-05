@@ -24,3 +24,4 @@ char* get_tokens(char* input);
 void remove_trailing_whitespace(char* input);
 char* prepare_input(char* input);
 int input_is_valid(char* input);
+int fork_process(char* tokens);
