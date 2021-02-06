@@ -98,28 +98,3 @@ char* get_tokens(char* input) {
     return strtok(input, DELIMITERS);
 }
 
-        // Doesn't work :/
-//void remove_trailing_whitespace(char* input){
-////    remove_trailing_new_line(input);
-//    while (input[strlen(input) - 2] == ' ') {
-//        input[strlen(input) - 1] = '\0';
-//
-//    }
-//    input[strlen(input) - 1 ] = '\n';
-//}
-
-        // maybe redundant
-//
-//char* prepare_input(char* input) {
-////    input = remove_leading_space(input);
-//    remove_trailing_new_line(input);
-//    return input;
-//}
-        // maybe redundant
-//int input_is_valid(char* input){
-//    // returns 1 if input is valid
-//
-//    return (!input_too_large(input) &&
-//            1
-//            );
-//}
