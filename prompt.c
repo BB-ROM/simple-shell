@@ -82,7 +82,7 @@ int check_for_exit(char* tokens) {
 void process_tokens(char* tokens) {
     // prints tokens for now
 
-    print_tokens(tokens);
+   print_tokens(tokens);
 }
 
 void print_tokens(char* tokens){
@@ -99,8 +99,7 @@ char* get_tokens(char* input) {
     return strtok(input, DELIMITERS);
 }
 
-int fork_process(char* input){
-    printf("This works");
+int fork_process(char* input){ 
     pid_t pid;
     pid = fork();
 
@@ -109,7 +108,11 @@ int fork_process(char* input){
         return 1;
     }
     else if (pid == 0){
-        execlp();
+      //char* programname = input;
+      char* programname = get_tokens(input); 
+      printf("%s\n", programname); 
+      char* argv[] = {programname, "-lh", "/home", NULL}; 
+      execvp(programname, argv);
     }
     else{
         wait(NULL);

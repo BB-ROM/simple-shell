@@ -5,6 +5,7 @@
 
 #include <stdlib.h>
 #include "prompt.h"
+#include <stdio.h> 
 
 int main() {
 
@@ -24,7 +25,7 @@ int main() {
         remove_leading_whitespace(&input);
         if (input_is_empty(input)) {
             continue;
-        }
+        } 
 
         // prompts the user if input is too big - max input length configurable
         // in the config file
@@ -37,19 +38,18 @@ int main() {
 
         // preprocessing done - actual starting point
         tokens = get_tokens(input);
-        fork_process(tokens);
+	printf("%s", input);
+	//printf("%s", tokens); 
+        //fork_process(tokens);
 
         // handling of exit
         if (check_for_exit(tokens))
             break;
 
         // iterate through tokens
-        process_tokens(tokens);
+        //process_tokens(tokens);
 
     }
-
-
-
     free(input);
     return 0;
 }
