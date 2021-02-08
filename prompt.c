@@ -9,15 +9,9 @@
 #include "prompt.h"
 #include <ctype.h>
 
-
 int SIZE = 512;
 char DELIMITERS[] = " \t|><&;";
 char PROMPT[] = "==>";
-
-char* new_input() {
-    // allocates memory to input
-    return malloc(sizeof(char)*SIZE);
-}
 
 void warn_user(char* warning){
     // print an Error with warning as a message
@@ -36,7 +30,6 @@ char* get_input(char* input){
 int ctrl_d_typed() {
     //  returns 1 if ctrl+d was pressed
     return feof(stdin) != 0;
-
 }
 
 int input_is_empty(char* input) {
@@ -61,64 +54,78 @@ void clear_stdin() {
 
 void remove_trailing_new_line(char* string) {
     // removes last newline character in passed string
-//    string[strlen(string)-1] = '\0';
     char *new = strchr( string, '\n' );
     if (new)
         *new = 0;
 }
 
-void remove_leading_whitespace(char** input) {
+void remove_leading_whitespace(char *input) {
     // here so that string such as "  " can be typed without segfault
-    while (**input == ' ')
-        (*input)++;
+    int index, s;
+    index = 0;
+    while (input[index] == ' ')
+        index++;
+
+    if (index != 0) {
+        s = 0;
+        while(input[s + index] != '\0') {
+            input[s] = input[s + index];
+            s++;
+        }
+        input[s] = '\0';
+    }
 }
 
-int check_for_exit(char* tokens) {
+int check_for_exit(char** tokens) {
     // returns 1 if exit was "requested"
-   return (strcmp(&tokens[0], "exit") == 0 ||
-           strcmp(&tokens[0], "EXIT") == 0);
+   return (strcmp(tokens[0], "exit") == 0 ||
+           strcmp(tokens[0], "EXIT") == 0);
 }
 
-void process_tokens(char* tokens) {
-    // prints tokens for now
-
-   print_tokens(tokens);
-}
-
-void print_tokens(char* tokens){
+void print_tokens(char* tokens[]){
     // prints tokens on terminal
-    while (tokens) {
-        printf("%s\n", tokens);
-        tokens = strtok(0, DELIMITERS);
+    int i = 0;
+    while(tokens[i]){
+        printf("%s\n", tokens[i]);
+        i++;
     }
 }
 
-char* get_tokens(char* input) {
-    // returns the tokens of the string
-    remove_trailing_new_line(input);
-    return strtok(input, DELIMITERS);
+int get_tokens(char *tokens[], char* input) {
+    // fills supplied array (tokens) with tokens - returns 0 if unsuccessful
+    char* token = strtok(input, DELIMITERS);
+    int i = 0;
+    while(token) {
+        tokens[i] = token;
+        i++;
+        token = strtok(NULL, DELIMITERS);
+        // too many tokens - segfault
+        if (i >= 50)
+            return 0;
+    }
+    return 1;
 }
 
-int fork_process(char* input){ 
-    pid_t pid;
-    pid = fork();
-
-    if(pid < 0){
-        printf(stderr, "Fork Failed");
-        return 1;
-    }
-    else if (pid == 0){
-      //char* programname = input;
-      char* programname = get_tokens(input); 
-      printf("%s\n", programname); 
-      char* argv[] = {programname, "-lh", "/home", NULL}; 
-      execvp(programname, argv);
-    }
-    else{
-        wait(NULL);
-        printf("Child Complete");
-    }
-    return 0;
-}
+//int fork_process(char* input){
+//    pid_t pid;
+//    pid = fork();
+//
+//    if(pid < 0){
+//        printf(stderr, "Fork Failed");
+//        return 1;
+//    }
+//    else if (pid == 0){
+//      //char* programname = input;
+//      char* programname = get_token(input);
+//      printf("%s\n", programname);
+//      char* argv[] = {programname, "-lh", "/home", NULL};
+//      execvp(programname, argv);
+//    }
+//    else{
+//        wait(NULL);
+//        printf("Child Complete");
+//    }
+//    return 0;
+//}
 
 

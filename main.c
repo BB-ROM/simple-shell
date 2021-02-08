@@ -1,17 +1,10 @@
-//TODO:
-// - ctrl+d behaves fine with no input before it but when you start typing and
-//   then decide to press ctrl+d you have to do it twice
-
-
-#include <stdlib.h>
 #include "prompt.h"
-#include <stdio.h> 
 
 int main() {
 
     // initialise state variables
-    char *input = new_input();
-    char *tokens;
+    char input[512];
+    char* tokens[50] = {"0"};
 
     while(1) {
         print_prompt();
@@ -22,12 +15,12 @@ int main() {
             break;
 
         // handling of empty strings
-        remove_leading_whitespace(&input);
+        remove_leading_whitespace(input);
         if (input_is_empty(input)) {
             continue;
         } 
 
-        // prompts the user if input is too big - max input length configurable
+        // prompts the user if input is too big char-wise - max input length configurable
         // in the config file
         if (input_too_large(input)) {
             clear_stdin();
@@ -37,19 +30,25 @@ int main() {
         }
 
         // preprocessing done - actual starting point
-        tokens = get_tokens(input);
-	printf("%s", input);
-	//printf("%s", tokens); 
-        //fork_process(tokens);
+
+        remove_trailing_new_line(input);
+        if(!get_tokens(tokens, input)){
+            warn_user("Too many tokens - 50 is the maximum number of tokens user can input");
+            break;
+        }
+
+        print_tokens(tokens); // for testing
 
         // handling of exit
-        if (check_for_exit(tokens))
+        if (check_for_exit((char **)tokens))
             break;
+
+        //fork_process(tokens);
 
         // iterate through tokens
         //process_tokens(tokens);
 
     }
-    free(input);
+
     return 0;
 }
