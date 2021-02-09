@@ -21,5 +21,5 @@ int check_for_exit(char** tokens);
 void print_tokens(char* tokens[]);
 char* prepare_input(char* input);
 int input_is_valid(char* input);
-int fork_process(char* tokens);
+int fork_process(char *tokens[]);
 int get_tokens(char *tokens[50],char* input);

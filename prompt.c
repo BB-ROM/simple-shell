@@ -84,6 +84,7 @@ int check_for_exit(char** tokens) {
 
 void print_tokens(char* tokens[]){
     // prints tokens on terminal
+  printf("Tokens: "); 
     int i = 0;
     while(tokens[i]){
         printf("%s\n", tokens[i]);
@@ -93,10 +94,10 @@ void print_tokens(char* tokens[]){
 
 int get_tokens(char *tokens[], char* input) {
     // fills supplied array (tokens) with tokens - returns 0 if unsuccessful
-    char* token = strtok(input, DELIMITERS);
+    char* token = strtok(input, DELIMITERS); 
     int i = 0;
     while(token) {
-        tokens[i] = token;
+        tokens[i] = token;  
         i++;
         token = strtok(NULL, DELIMITERS);
         // too many tokens - segfault
@@ -106,26 +107,26 @@ int get_tokens(char *tokens[], char* input) {
     return 1;
 }
 
-//int fork_process(char* input){
-//    pid_t pid;
-//    pid = fork();
-//
-//    if(pid < 0){
-//        printf(stderr, "Fork Failed");
-//        return 1;
-//    }
-//    else if (pid == 0){
-//      //char* programname = input;
-//      char* programname = get_token(input);
-//      printf("%s\n", programname);
-//      char* argv[] = {programname, "-lh", "/home", NULL};
-//      execvp(programname, argv);
-//    }
-//    else{
-//        wait(NULL);
-//        printf("Child Complete");
-//    }
-//    return 0;
-//}
+int fork_process(char *tokens[]){
+   pid_t pid;
+   pid = fork();
+
+   if(pid < 0){
+     printf("Fork Failed");
+     return 1;
+   }
+   else if (pid == 0){
+     //char* programname = input;
+      char* programname = tokens[0];
+      //printf("%s\n", programname);
+      char* command = tokens[1]; 
+      char* argv[] = {programname, command, "/home", NULL};
+      execvp(programname, argv);
+   }
+   else{
+      wait(NULL);
+   }
+    return 0;
+}
 
 

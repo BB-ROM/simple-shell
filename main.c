@@ -37,13 +37,13 @@ int main() {
             break;
         }
 
-        print_tokens(tokens); // for testing
+	// print_tokens(tokens); // for testing
 
         // handling of exit
         if (check_for_exit((char **)tokens))
             break;
 
-        //fork_process(tokens);
+        fork_process(tokens);
 
         // iterate through tokens
         //process_tokens(tokens);
