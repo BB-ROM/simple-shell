@@ -2,14 +2,13 @@
 // Created by Peter on 29/01/2021.
 //
 #include <unistd.h>
-#include <sys/types.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <wait.h>
+#include <stdlib.h>
 #include "prompt.h"
-#include <ctype.h>
 
-int SIZE = 512;
+
 char DELIMITERS[] = " \t|><&;";
 char PROMPT[] = "==>";
 
@@ -22,24 +21,24 @@ void print_prompt() {
     printf("%s", PROMPT);
 }
 
-char* get_input(char* input){
-    // stores typed commands from stdin to input
-    return fgets(input, SIZE, stdin);
+char* get_input(char *input, int size){
+    // stores input from stdin to input
+    return fgets(input, size, stdin);
 }
 
 int ctrl_d_typed() {
-    //  returns 1 if ctrl+d was pressed
+    // returns 1 if ctrl+d was pressed
     return feof(stdin) != 0;
 }
 
-int input_is_empty(char* input) {
+int input_is_empty(char *input) {
     // checks for empty input
     return strlen(input)-1 == 0;
 }
 
-int input_too_large(char* input) {
+int input_too_large(char *input) {
     // if the string has not exceed the maximum length (SIZE-2 characters to
-    // accomodate for \0 and \n) the last character should be the \n
+    // accommodate for \0 and \n) the last character should be the \n
     //
     // returns 1 if input is tool large (more than size-2) and 0 otherwise
 
@@ -51,8 +50,7 @@ void clear_stdin() {
     while ((c = getchar()) != '\n' && c != EOF);
 }
 
-
-void remove_trailing_new_line(char* string) {
+void remove_trailing_new_line(char *string) {
     // removes last newline character in passed string
     char *new = strchr( string, '\n' );
     if (new)
@@ -76,13 +74,37 @@ void remove_leading_whitespace(char *input) {
     }
 }
 
-int check_for_exit(char** tokens) {
+int check_for_exit(char **tokens) {
     // returns 1 if exit was "requested"
    return (strcmp(tokens[0], "exit") == 0 ||
            strcmp(tokens[0], "EXIT") == 0);
 }
 
-void print_tokens(char* tokens[]){
+int get_tokens(char **tokens,int size, char *input){
+    // returns 0 if tokens can't be extracted from input and 1 if successful
+
+    remove_leading_whitespace(input);
+    if (input_is_empty(input)) {
+        return 0;
+    }
+
+    if (input_too_large(input)) {
+        clear_stdin();
+        warn_user("Input too large - default max character limit is 512 "
+                  "characters (can be changed in config file)");
+        return 0;
+    }
+
+    remove_trailing_new_line(input);
+    if(!store_tokens(tokens, size, input)){
+        warn_user("Too many tokens - 50 is the maximum number of tokens user can input");
+        return 0;
+    }
+
+    return 1;
+}
+
+void print_tokens(char **tokens){
     // prints tokens on terminal
   printf("Tokens: "); 
     int i = 0;
@@ -92,8 +114,8 @@ void print_tokens(char* tokens[]){
     }
 }
 
-int get_tokens(char *tokens[], char* input) {
-    // fills supplied array (tokens) with tokens - returns 0 if unsuccessful
+int store_tokens(char **tokens, int size, char *input) {
+    // stores individual tokens from input to tokens - returns 0 if unsuccessful
     char* token = strtok(input, DELIMITERS); 
     int i = 0;
     while(token) {
@@ -101,32 +123,42 @@ int get_tokens(char *tokens[], char* input) {
         i++;
         token = strtok(NULL, DELIMITERS);
         // too many tokens - segfault
-        if (i >= 50)
+        if (i >= size-1)
             return 0;
     }
+    // last token should be null to work with exec()
+    tokens[size-1] = NULL;
     return 1;
 }
 
-int fork_process(char *tokens[]){
-   pid_t pid;
-   pid = fork();
+int fork_process(char **tokens) {
+    pid_t pid;
+    pid = fork();
 
-   if(pid < 0){
-     printf("Fork Failed");
-     return 1;
-   }
-   else if (pid == 0){
-     //char* programname = input;
-      char* programname = tokens[0];
-      //printf("%s\n", programname);
-      char* command = tokens[1]; 
-      char* argv[] = {programname, command, "/home", NULL};
-      execvp(programname, argv);
-   }
-   else{
-      wait(NULL);
-   }
+    // unsuccessful
+    if(pid < 0){
+        printf("Fork Failed");
+        return 1;
+    }
+    // child process
+    else if (pid == 0){
+//        print_tokens(tokens);
+        if(execvp(tokens[0], tokens) == -1) {
+            printf("error has occurred\n");
+            exit(0);
+        }
+    }
+    // parent process
+    else {
+       wait(NULL);
+    }
     return 0;
 }
 
+void process_child_process(char **tokens) {
+    if(execvp(tokens[0], tokens) == -1) {
+        printf("error has occurred\n");
+        exit(0);
+    }
+}
 
