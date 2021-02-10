@@ -1,11 +1,6 @@
 //
-// Created by Peter on 29/01/2021.
+// Created by Group 26 on 29/01/2021.
 //
-
-#ifndef CS210_SIMPLE_SHELL_PROMPT_H
-#define CS210_SIMPLE_SHELL_PROMPT_H
-
-#endif //CS210_SIMPLE_SHELL_PROMPT_H
 
 void warn_user(char* warning);
 void print_prompt();
