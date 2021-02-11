@@ -2,3 +2,7 @@
 /CMakeLists.txt
 /gowno
 .idea/
+main
+test.c
+test
+shell

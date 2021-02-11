@@ -18,7 +18,9 @@ void warn_user(char* warning){
 }
 
 void print_prompt() {
-    printf("%s", PROMPT);
+    char arr[256];
+    getcwd(arr, 255);
+    printf("[%s]%s", arr, PROMPT);
 }
 
 char* get_input(char *input, int size){
@@ -156,5 +158,23 @@ void process_child_process(char **tokens) {
         perror("Error");
         printf("unable to execute %s command\n", tokens[0]);
         exit(0);
+    }
+}
+
+char* get_environment() {
+    return getenv("PATH");
+}
+
+void set_environment(char* environment) {
+    setenv("PATH", environment, 1);
+}
+
+char* get_home_dir() {
+    return getenv("HOME");
+}
+
+void set_cwd(char* dir) {
+    if(chdir(dir) == -1){
+        perror("Error");
     }
 }
