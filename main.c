@@ -1,12 +1,14 @@
 #include <stdio.h>
 #include "prompt.h"
+#include "processing.h"
 
 #define INPUT_SIZE 512
 #define TOKENS_SIZE 50
 
 int main() {
 
-    // initialise state variables
+    // initialise state variables, get current PATH and set cwd to
+    // users home directory
     char input[INPUT_SIZE];
     char* tokens[TOKENS_SIZE] = {"0"};
     char* env = get_environment();
@@ -34,6 +36,7 @@ int main() {
         fork_process(tokens);
     }
 
+    // terminate shell
     set_environment(env);
     printf("%s\n", get_environment());
     return 0;

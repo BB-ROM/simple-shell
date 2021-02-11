@@ -4,8 +4,6 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
-#include <wait.h>
-#include <stdlib.h>
 #include "prompt.h"
 
 
@@ -131,50 +129,4 @@ int store_tokens(char **tokens, int size, char *input) {
     // last token should be null to work with exec()
     tokens[i] = NULL;
     return 1;
-}
-
-int fork_process(char **tokens) {
-    pid_t pid;
-    pid = fork();
-
-    // unsuccessful
-    if(pid < 0){
-        printf("Fork Failed");
-        return 1;
-    }
-    // child process
-    else if (pid == 0){
-        process_child_process(tokens);
-    }
-    // parent process
-    else {
-       wait(NULL);
-    }
-    return 0;
-}
-
-void process_child_process(char **tokens) {
-    if(execvp(tokens[0], tokens) == -1) {
-        perror("Error");
-        printf("unable to execute %s command\n", tokens[0]);
-        exit(0);
-    }
-}
-
-char* get_environment() {
-    return getenv("PATH");
-}
-
-void set_environment(char* environment) {
-    setenv("PATH", environment, 1);
-}
-
-char* get_home_dir() {
-    return getenv("HOME");
-}
-
-void set_cwd(char* dir) {
-    if(chdir(dir) == -1){
-        perror("Error");
-    }
 }
