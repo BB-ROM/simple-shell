@@ -1,18 +1,21 @@
 #include <stdio.h>
 #include "prompt.h"
 #include "processing.h"
+#include "commands.h"
+
 
 #define INPUT_SIZE 512
 #define TOKENS_SIZE 50
 
 int main() {
 
-    // initialise state variables, get current PATH and set cwd to
-    // users home directory
+    // initialise state variables, get current PATH
+    // and set cwd to users home directory
     char input[INPUT_SIZE];
     char* tokens[TOKENS_SIZE] = {"0"};
     char* env = get_environment();
     set_cwd(get_home_dir());
+    int command;
 
     while(1) {
         print_prompt();
@@ -29,15 +32,20 @@ int main() {
             continue;
 
         // handling of exit
-        if (check_for_exit(tokens))
+        if (check_for_exit(tokens)) // we could make it a command like others
             break;
 
         // process command
-        fork_process(tokens);
+        if ((command = is_command(tokens[0])) != -1) {
+            exec_command(command, tokens);
+        }
+        else
+            fork_process(tokens);
+
     }
 
     // terminate shell
     set_environment(env);
-    printf("%s\n", get_environment());
+    printf("%s\n", get_environment()); // remove after testing - DEBUG
     return 0;
 }

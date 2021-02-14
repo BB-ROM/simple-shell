@@ -2,7 +2,6 @@
 // Created by Group 26 on 29/01/2021.
 //
 
-void warn_user(char* warning);
 void print_prompt();
 char* get_input(char *input, int size);
 int ctrl_d_typed();

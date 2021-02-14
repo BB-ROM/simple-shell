@@ -3,17 +3,12 @@
 //
 #include <unistd.h>
 #include <stdio.h>
-#include <string.h>
+#include "string.h"
 #include "prompt.h"
 
 
 char DELIMITERS[] = " \t|><&;";
-char PROMPT[] = "==>";
-
-void warn_user(char* warning){
-    // print an Error with warning as a message
-    printf("ERROR! - %s\n", warning);
-}
+char PROMPT[] = "==> ";
 
 void print_prompt() {
     char arr[256];
@@ -46,19 +41,20 @@ int input_too_large(char *input) {
 }
 
 void clear_stdin() {
+    // useful for when input is too large
     int c;
     while ((c = getchar()) != '\n' && c != EOF);
 }
 
 void remove_trailing_new_line(char *string) {
-    // removes last newline character in passed string
+    // removes last newline character in a string
     char *new = strchr( string, '\n' );
     if (new)
         *new = 0;
 }
 
 void remove_leading_whitespace(char *input) {
-    // here so that string such as "  " can be typed without segfault
+    // ensures string such as "  " can be typed without segfault
     int index, s;
     index = 0;
     while (input[index] == ' ')
@@ -83,43 +79,39 @@ int check_for_exit(char **tokens) {
 int get_tokens(char **tokens,int size, char *input){
     // returns 0 if tokens can't be extracted from input and 1 if successful
 
+    // leading white space is ugly
     remove_leading_whitespace(input);
     if (input_is_empty(input)) {
         return 0;
     }
 
+    // strings need \n to check for correct length
     if (input_too_large(input)) {
         clear_stdin();
-        warn_user("Input too large - default max character limit is 512 "
+        printf("Input too large - default max character limit is 512 "
                   "characters (can be changed in config file)");
         return 0;
     }
 
+    // \n at the end of string could potentially interfere with the commands - has to be stripped
     remove_trailing_new_line(input);
     if(!store_tokens(tokens, size, input)){
-        warn_user("Too many tokens - 50 is the maximum number of tokens user can input");
+        printf("Too many tokens - 50 is the maximum number of tokens user can input");
         return 0;
     }
 
+    //string is correct
     return 1;
 }
 
-void print_tokens(char **tokens){
-    // prints tokens on terminal
-  printf("Tokens: "); 
-    int i = 0;
-    while(tokens[i]){
-        printf("{%s}\n", tokens[i]);
-        i++;
-    }
-}
-
 int store_tokens(char **tokens, int size, char *input) {
-    // stores individual tokens from input to tokens - returns 0 if unsuccessful
-    char* token = strtok(input, DELIMITERS); 
+    // stores individual tokens from input to provided
+    // tokens array - max is 50
+    // returns 0 if unsuccessful
+    char* token = strtok(input, DELIMITERS);
     int i = 0;
     while(token) {
-        tokens[i] = token;  
+        tokens[i] = token;
         i++;
         token = strtok(NULL, DELIMITERS);
         // too many tokens - segfault
@@ -129,4 +121,14 @@ int store_tokens(char **tokens, int size, char *input) {
     // last token should be null to work with exec()
     tokens[i] = NULL;
     return 1;
+}
+
+void print_tokens(char **tokens){
+    // prints tokens on terminal - DEBUG
+  printf("Tokens: "); 
+    int i = 0;
+    while(tokens[i]){
+        printf("{%s}\n", tokens[i]);
+        i++;
+    }
 }

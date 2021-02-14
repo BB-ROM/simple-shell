@@ -3,7 +3,6 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <wait.h>
-#include "commands.h"
 
 int fork_process(char **tokens) {
     pid_t pid;
@@ -14,11 +13,11 @@ int fork_process(char **tokens) {
         printf("Fork Failed");
         return 1;
     }
-        // child process
+    // child process
     else if (pid == 0){
         process_child_process(tokens);
     }
-        // parent process
+    // parent process
     else {
         wait(NULL);
     }
@@ -26,15 +25,9 @@ int fork_process(char **tokens) {
 }
 
 void process_child_process(char **tokens) {
-    int command = is_command(tokens[0]);
-    printf("%d\n", command);
-    if (command != -1){
-        exec_command(command, tokens);
-        exit(0);
-    }
-    else if(execvp(tokens[0], tokens) == -1) {
-        perror("Error");
-        printf("unable to execute %s command\n", tokens[0]);
+    // if command is a executable it runs
+    if(execvp(tokens[0], tokens) == -1) {
+        perror(tokens[0]);
         exit(0);
     }
 }
@@ -52,6 +45,7 @@ char* get_home_dir() {
 }
 
 void set_cwd(char* dir) {
+    // current working directory
     if(chdir(dir) == -1){
         perror("Error");
     }
