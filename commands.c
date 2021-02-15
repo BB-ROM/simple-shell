@@ -1,19 +1,23 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 
 #include "commands.h"
+#include "processing.h"
 
 // keywords that map commands to functions
 char *commands_calls[] = {
         "getpath",
-        "setpath"
+        "setpath",
+        "cd"
 };
 
 // array of function pointers :)
 int (*commands[])(char **) = {
         &getpath,
-        &setpath
+        &setpath,
+        &cd
 };
 
 int is_command(char* command) {
@@ -66,4 +70,20 @@ int setpath(char** args) {
                "a string of system paths separated by a comma\n");
     }
     return 0;
+}
+
+int cd(char** args) {
+    // get_home_dir and set_cwd are imports
+    // should we get rid of them, merge commands.c and processing.c or keep it?
+    if(number_of_args(args) == 0) {
+        chdir(get_home_dir());
+    }
+    else if (number_of_args(args) == 1) {
+        set_cwd(args[1]);
+    }
+    else {
+        printf("This command take either no or one argument: a path on the system\n");
+    }
+
+    return 1;
 }

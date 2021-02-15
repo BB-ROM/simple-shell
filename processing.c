@@ -25,7 +25,7 @@ int fork_process(char **tokens) {
 }
 
 void process_child_process(char **tokens) {
-    // if command is a executable it runs
+    // if command is an executable it runs
     if(execvp(tokens[0], tokens) == -1) {
         perror(tokens[0]);
         exit(0);
