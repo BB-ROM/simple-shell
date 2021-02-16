@@ -1,5 +1,5 @@
 //
-// Created by Peter on 29/01/2021.
+// Created by Group 26 on 29/01/2021.
 //
 #include <unistd.h>
 #include <stdio.h>
@@ -109,7 +109,7 @@ void print_tokens(char **tokens){
   printf("Tokens: "); 
     int i = 0;
     while(tokens[i]){
-        printf("%s\n", tokens[i]);
+        printf("{%s}\n", tokens[i]);
         i++;
     }
 }
@@ -127,7 +127,7 @@ int store_tokens(char **tokens, int size, char *input) {
             return 0;
     }
     // last token should be null to work with exec()
-    tokens[size-1] = NULL;
+    tokens[i] = NULL;
     return 1;
 }
 
@@ -142,11 +142,7 @@ int fork_process(char **tokens) {
     }
     // child process
     else if (pid == 0){
-//        print_tokens(tokens);
-        if(execvp(tokens[0], tokens) == -1) {
-            printf("error has occurred\n");
-            exit(0);
-        }
+        process_child_process(tokens);
     }
     // parent process
     else {
@@ -157,8 +153,8 @@ int fork_process(char **tokens) {
 
 void process_child_process(char **tokens) {
     if(execvp(tokens[0], tokens) == -1) {
-        printf("error has occurred\n");
+        perror("Error");
+        printf("unable to execute %s command\n", tokens[0]);
         exit(0);
     }
 }
-
