@@ -1,0 +1,5 @@
+Should we reset path when exiting child process?
+Should the shell print PATH after exiting or is it just for debug and testing?
+Should we check for correct input format in setpath?
+Can exit be a command like getpath and setpath?
+How exactly do you set HOME? When you enter set command an error message is printed. 
