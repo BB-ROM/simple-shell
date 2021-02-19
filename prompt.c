@@ -1,44 +1,47 @@
-//
-// Created by Group 26 on 29/01/2021.
-//
+#include <string.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
-#include "string.h"
+#include <ctype.h>
+#include <wait.h>
+
+#include <string.h>
 #include "prompt.h"
 
 
 char DELIMITERS[] = " \t|><&;";
-char PROMPT[] = "==> ";
+//char PROMPT[] = "==> ";
 
 void print_prompt() {
     char arr[256];
     getcwd(arr, 255);
-    printf("[%s]%s", arr, PROMPT);
+    printf("[%s]%s", arr, "==> ");
+//    printf("[%s]%s", arr, PROMPT);
 }
 
-char* get_input(char *input, int size){
+char *get_input(char *input, int size) {
     // stores input from stdin to input
     return fgets(input, size, stdin);
 }
 
-int ctrl_d_typed() {
-    // returns 1 if ctrl+d was pressed
-    return feof(stdin) != 0;
-}
+//int ctrl_d_typed() {
+//    // returns 1 if ctrl+d was pressed
+//    return feof(stdin) != 0;
+//}
 
-int input_is_empty(char *input) {
-    // checks for empty input
-    return strlen(input)-1 == 0;
-}
+//int input_is_empty(char *input) {
+//    // checks for empty input
+//    return strlen(input)-1 == 0;
+//}
 
-int input_too_large(char *input) {
-    // if the string has not exceed the maximum length (SIZE-2 characters to
-    // accommodate for \0 and \n) the last character should be the \n
-    //
-    // returns 1 if input is tool large (more than size-2) and 0 otherwise
-
-    return input[strlen(input)-1] != '\n';
-}
+//int input_too_large(char *input) {
+//    // if the string has not exceed the maximum length (SIZE-2 characters to
+//    // accommodate for \0 and \n) the last character should be the \n
+//    //
+//    // returns 1 if input is tool large (more than size-2) and 0 otherwise
+//
+//    return input[strlen(input) - 1] != '\n';
+//}
 
 void clear_stdin() {
     // useful for when input is too large
@@ -48,7 +51,7 @@ void clear_stdin() {
 
 void remove_trailing_new_line(char *string) {
     // removes last newline character in a string
-    char *new = strchr( string, '\n' );
+    char *new = strchr(string, '\n');
     if (new)
         *new = 0;
 }
@@ -62,7 +65,7 @@ void remove_leading_whitespace(char *input) {
 
     if (index != 0) {
         s = 0;
-        while(input[s + index] != '\0') {
+        while (input[s + index] != '\0') {
             input[s] = input[s + index];
             s++;
         }
@@ -70,32 +73,34 @@ void remove_leading_whitespace(char *input) {
     }
 }
 
-int check_for_exit(char **tokens) {
-    // returns 1 if exit was "requested"
-   return (strcmp(tokens[0], "exit") == 0 ||
-           strcmp(tokens[0], "EXIT") == 0);
-}
+//int check_for_exit(char **tokens) {
+//    // returns 1 if exit was "requested"
+//    return (strcmp(tokens[0], "exit") == 0 ||
+//            strcmp(tokens[0], "EXIT") == 0);
+//}
 
-int get_tokens(char **tokens,int size, char *input){
+int get_tokens(char **tokens, int size, char *input) {
     // returns 0 if tokens can't be extracted from input and 1 if successful
 
     // leading white space is ugly
     remove_leading_whitespace(input);
-    if (input_is_empty(input)) {
+//    if (input_is_empty(input)) {
+    if (strlen(input) - 1 == 0) {
         return 0;
     }
 
     // strings need \n to check for correct length
-    if (input_too_large(input)) {
+//    if (input_too_large(input)) {
+    if (input[strlen(input) - 1] != '\n') {
         clear_stdin();
         printf("Input too large - default max character limit is 512 "
-                  "characters (can be changed in config file)");
+               "characters (can be changed in config file)");
         return 0;
     }
 
     // \n at the end of string could potentially interfere with the commands - has to be stripped
     remove_trailing_new_line(input);
-    if(!store_tokens(tokens, size, input)){
+    if (!store_tokens(tokens, size, input)) {
         printf("Too many tokens - 50 is the maximum number of tokens user can input");
         return 0;
     }
@@ -108,14 +113,17 @@ int store_tokens(char **tokens, int size, char *input) {
     // stores individual tokens from input to provided
     // tokens array - max is 50
     // returns 0 if unsuccessful
-    char* token = strtok(input, DELIMITERS);
+    char *token = strtok(input, DELIMITERS);
     int i = 0;
-    while(token) {
+    while (token) {
+        for(int i = 0; token[i]; i++){
+            token[i] = tolower(token[i]);
+        }
         tokens[i] = token;
         i++;
         token = strtok(NULL, DELIMITERS);
         // too many tokens - segfault
-        if (i >= size-1)
+        if (i >= size - 1)
             return 0;
     }
     // last token should be null to work with exec()
@@ -123,12 +131,146 @@ int store_tokens(char **tokens, int size, char *input) {
     return 1;
 }
 
-void print_tokens(char **tokens){
-    // prints tokens on terminal - DEBUG
-  printf("Tokens: "); 
-    int i = 0;
-    while(tokens[i]){
-        printf("{%s}\n", tokens[i]);
-        i++;
+////not in use anymore
+//void print_tokens(char **tokens) {
+//    // prints tokens on terminal - DEBUG
+//    printf("Tokens: ");
+//    int i = 0;
+//    while (tokens[i]) {
+//        printf("{%s}\n", tokens[i]);
+//        i++;
+//    }
+//}
+
+/**
+ * Methods for commands
+ */
+// keywords that map commands to functions
+char *commands_calls[] = {
+        "getpath",
+        "setpath",
+        "cd"
+};
+
+// array of function pointers :)
+int (*commands[])(char **) = {
+        &getpath,
+        &setpath,
+        &cd
+};
+
+int is_command(char *command) {
+    // returns the index of function or -1 if command is not a function
+    int num_of_commands = sizeof(commands_calls) / sizeof(char *);
+    for (int i = 0; i < num_of_commands; i++) {
+        if (strcmp(command, commands_calls[i]) == 0)
+            return i;
+    }
+    return -1;
+}
+
+int exec_command(int command, char **tokens) {
+    commands[command](tokens);
+    return 0;
+}
+
+int number_of_args(char **args) {
+    int length = 0;
+    while (args[length] != NULL) {
+        length++;
+    }
+    return length - 1;
+}
+
+//int path_is_valid(char *path) {
+//    return 1;
+//}
+
+int getpath(char **args) {
+    if (number_of_args(args) > 0) {
+        printf("This command doesn't take any arguments\n");
+    } else {
+        printf("%s\n", getenv("PATH"));
+    }
+    return 0;
+}
+
+int setpath(char **args) {
+    if (number_of_args(args) != 1) {
+        printf("This command takes exactly one argument\n");
+    } else if (chdir(args[1]) != 0){
+        printf("Provided path has invalid format. Path should be "
+               "a string of system paths separated by a forward slash\n");
+    }
+//  } else if (path_is_valid(args[1])) {
+//      setenv("PATH", args[1], 1);
+//    } else {
+//        printf("Provided path has invalid format. Path should be "
+//               "a string of system paths separated by a comma\n");
+//    }
+    return 0;
+}
+
+int cd(char **args) {
+    // get_home_dir and set_cwd are imports
+    // should we get rid of them, merge commands.c and processing.c or keep it?
+    if (number_of_args(args) == 0) {
+        chdir(get_home_dir());
+    } else if (number_of_args(args) == 1) {
+        set_cwd(args[1]);
+    } else {
+        printf("This command take either no or one argument: a path on the system\n");
+    }
+
+    return 1;
+}
+
+/**
+ * Methods for processing
+ */
+int fork_process(char **tokens) {
+    pid_t pid;
+    pid = fork();
+
+    // unsuccessful
+    if (pid < 0) {
+        printf("Fork Failed");
+        return 1;
+    }
+        // child process
+    else if (pid == 0) {
+        process_child_process(tokens);
+    }
+        // parent process
+    else {
+        wait(NULL);
+    }
+    return 0;
+}
+
+void process_child_process(char **tokens) {
+    // if command is an executable it runs
+    if (execvp(tokens[0], tokens) == -1) {
+        perror(tokens[0]);
+        exit(0);
+    }
+}
+
+char *get_environment() {
+    return getenv("PATH");
+}
+
+void set_environment(char *environment) {
+    setenv("PATH", environment, 1);
+}
+
+char *get_home_dir() {
+    return getenv("HOME");
+}
+
+void set_cwd(char *dir) {
+    // current working directory
+    if (chdir(dir) == -1) {
+        perror("Error");
     }
 }
