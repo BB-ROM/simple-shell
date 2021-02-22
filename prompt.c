@@ -94,6 +94,9 @@ int store_tokens(char **tokens, int size, char *input) {
         if (i >= size - 1)
             return 0;
     }
+    char *tokLow = tokens[0];
+    for(int i = 0; tokLow[i]; i++)
+        tokLow[i] = tolower(tokLow[i]);
 
     // last token should be null to work with exec()
     tokens[i] = NULL;
