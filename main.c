@@ -20,7 +20,6 @@ int main() {
         get_input(input, INPUT_SIZE);
 
         // exits for ctrl+d
-//        if(ctrl_d_typed())
         if(feof(stdin) != 0){
             printf("\n");
             break;
@@ -31,7 +30,6 @@ int main() {
             continue;
 
         // handling of exit
-//        if (check_for_exit(tokens))
         if(strcmp(tokens[0], "exit") == 0)
             break;
 

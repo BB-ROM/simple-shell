@@ -10,38 +10,17 @@
 
 
 char DELIMITERS[] = " \t|><&;";
-//char PROMPT[] = "==> ";
 
 void print_prompt() {
     char arr[256];
     getcwd(arr, 255);
     printf("[%s]%s", arr, "==> ");
-//    printf("[%s]%s", arr, PROMPT);
 }
 
 char *get_input(char *input, int size) {
     // stores input from stdin to input
     return fgets(input, size, stdin);
 }
-
-//int ctrl_d_typed() {
-//    // returns 1 if ctrl+d was pressed
-//    return feof(stdin) != 0;
-//}
-
-//int input_is_empty(char *input) {
-//    // checks for empty input
-//    return strlen(input)-1 == 0;
-//}
-
-//int input_too_large(char *input) {
-//    // if the string has not exceed the maximum length (SIZE-2 characters to
-//    // accommodate for \0 and \n) the last character should be the \n
-//    //
-//    // returns 1 if input is tool large (more than size-2) and 0 otherwise
-//
-//    return input[strlen(input) - 1] != '\n';
-//}
 
 void clear_stdin() {
     // useful for when input is too large
@@ -73,24 +52,16 @@ void remove_leading_whitespace(char *input) {
     }
 }
 
-//int check_for_exit(char **tokens) {
-//    // returns 1 if exit was "requested"
-//    return (strcmp(tokens[0], "exit") == 0 ||
-//            strcmp(tokens[0], "EXIT") == 0);
-//}
-
 int get_tokens(char **tokens, int size, char *input) {
     // returns 0 if tokens can't be extracted from input and 1 if successful
 
     // leading white space is ugly
     remove_leading_whitespace(input);
-//    if (input_is_empty(input)) {
     if (strlen(input) - 1 == 0) {
         return 0;
     }
 
     // strings need \n to check for correct length
-//    if (input_too_large(input)) {
     if (input[strlen(input) - 1] != '\n') {
         clear_stdin();
         printf("Input too large - default max character limit is 512 "
@@ -116,9 +87,6 @@ int store_tokens(char **tokens, int size, char *input) {
     char *token = strtok(input, DELIMITERS);
     int i = 0;
     while (token) {
-        for(int i = 0; token[i]; i++){
-            token[i] = tolower(token[i]);
-        }
         tokens[i] = token;
         i++;
         token = strtok(NULL, DELIMITERS);
@@ -126,21 +94,11 @@ int store_tokens(char **tokens, int size, char *input) {
         if (i >= size - 1)
             return 0;
     }
+
     // last token should be null to work with exec()
     tokens[i] = NULL;
     return 1;
 }
-
-////not in use anymore
-//void print_tokens(char **tokens) {
-//    // prints tokens on terminal - DEBUG
-//    printf("Tokens: ");
-//    int i = 0;
-//    while (tokens[i]) {
-//        printf("{%s}\n", tokens[i]);
-//        i++;
-//    }
-//}
 
 /**
  * Methods for commands
@@ -182,10 +140,6 @@ int number_of_args(char **args) {
     return length - 1;
 }
 
-//int path_is_valid(char *path) {
-//    return 1;
-//}
-
 int getpath(char **args) {
     if (number_of_args(args) > 0) {
         printf("This command doesn't take any arguments\n");
@@ -198,16 +152,12 @@ int getpath(char **args) {
 int setpath(char **args) {
     if (number_of_args(args) != 1) {
         printf("This command takes exactly one argument\n");
-    } else if (chdir(args[1]) != 0){
+    } else if (chdir(args[1]) == 0)
+      setenv("PATH", args[1], 1);
+     else {
         printf("Provided path has invalid format. Path should be "
-               "a string of system paths separated by a forward slash\n");
+               "a string of system paths separated by a comma\n");
     }
-//  } else if (path_is_valid(args[1])) {
-//      setenv("PATH", args[1], 1);
-//    } else {
-//        printf("Provided path has invalid format. Path should be "
-//               "a string of system paths separated by a comma\n");
-//    }
     return 0;
 }
 
