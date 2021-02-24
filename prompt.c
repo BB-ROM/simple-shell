@@ -2,14 +2,9 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
-#include <ctype.h>
 #include <wait.h>
 
-#include <string.h>
 #include "prompt.h"
-
-
-char DELIMITERS[] = " \t|><&;";
 
 void print_prompt() {
     char arr[256];
@@ -17,26 +12,21 @@ void print_prompt() {
     printf("[%s]%s", arr, "==> ");
 }
 
-char *get_input(char *input, int size) {
-    // stores input from stdin to input
-    return fgets(input, size, stdin);
-}
-
+// useful for when input is too large
 void clear_stdin() {
-    // useful for when input is too large
     int c;
     while ((c = getchar()) != '\n' && c != EOF);
 }
 
+// removes last newline character in a string
 void remove_trailing_new_line(char *string) {
-    // removes last newline character in a string
     char *new = strchr(string, '\n');
     if (new)
         *new = 0;
 }
 
+// ensures string such as "  " can be typed without segfault
 void remove_leading_whitespace(char *input) {
-    // ensures string such as "  " can be typed without segfault
     int index, s;
     index = 0;
     while (input[index] == ' ')
@@ -52,11 +42,12 @@ void remove_leading_whitespace(char *input) {
     }
 }
 
+// returns 0 if tokens can't be extracted from input and 1 if successful
 int get_tokens(char **tokens, int size, char *input) {
-    // returns 0 if tokens can't be extracted from input and 1 if successful
 
-    // leading white space is ugly
+    // leading white space is useless
     remove_leading_whitespace(input);
+    // is input empty
     if (strlen(input) - 1 == 0) {
         return 0;
     }
@@ -80,10 +71,11 @@ int get_tokens(char **tokens, int size, char *input) {
     return 1;
 }
 
+// stores individual tokens from input to provided
+// tokens array - max is 50
+// returns 0 if unsuccessful
 int store_tokens(char **tokens, int size, char *input) {
-    // stores individual tokens from input to provided
-    // tokens array - max is 50
-    // returns 0 if unsuccessful
+    char DELIMITERS[] = " \t|><&;";
     char *token = strtok(input, DELIMITERS);
     int i = 0;
     while (token) {
@@ -94,93 +86,12 @@ int store_tokens(char **tokens, int size, char *input) {
         if (i >= size - 1)
             return 0;
     }
-    char *tokLow = tokens[0];
-    for(int i = 0; tokLow[i]; i++)
-        tokLow[i] = tolower(tokLow[i]);
 
     // last token should be null to work with exec()
     tokens[i] = NULL;
     return 1;
 }
 
-/**
- * Methods for commands
- */
-// keywords that map commands to functions
-char *commands_calls[] = {
-        "getpath",
-        "setpath",
-        "cd"
-};
-
-// array of function pointers :)
-int (*commands[])(char **) = {
-        &getpath,
-        &setpath,
-        &cd
-};
-
-int is_command(char *command) {
-    // returns the index of function or -1 if command is not a function
-    int num_of_commands = sizeof(commands_calls) / sizeof(char *);
-    for (int i = 0; i < num_of_commands; i++) {
-        if (strcmp(command, commands_calls[i]) == 0)
-            return i;
-    }
-    return -1;
-}
-
-int exec_command(int command, char **tokens) {
-    commands[command](tokens);
-    return 0;
-}
-
-int number_of_args(char **args) {
-    int length = 0;
-    while (args[length] != NULL) {
-        length++;
-    }
-    return length - 1;
-}
-
-int getpath(char **args) {
-    if (number_of_args(args) > 0) {
-        printf("This command doesn't take any arguments\n");
-    } else {
-        printf("%s\n", getenv("PATH"));
-    }
-    return 0;
-}
-
-int setpath(char **args) {
-    if (number_of_args(args) != 1) {
-        printf("This command takes exactly one argument\n");
-    } else if (chdir(args[1]) == 0)
-      setenv("PATH", args[1], 1);
-     else {
-        printf("Provided path has invalid format. Path should be "
-               "a string of system paths separated by a comma\n");
-    }
-    return 0;
-}
-
-int cd(char **args) {
-    // get_home_dir and set_cwd are imports
-    // should we get rid of them, merge commands.c and processing.c or keep it?
-    if (number_of_args(args) == 0) {
-        chdir(get_home_dir());
-    } else if (number_of_args(args) == 1) {
-        set_cwd(args[1]);
-    } else {
-        printf("This command take either no or one argument: a path on the system\n");
-    }
-
-    return 1;
-}
-
-/**
- * Methods for processing
- */
 int fork_process(char **tokens) {
     pid_t pid;
     pid = fork();
@@ -201,6 +112,7 @@ int fork_process(char **tokens) {
     return 0;
 }
 
+// helper function to take care of child processes after fork
 void process_child_process(char **tokens) {
     // if command is an executable it runs
     if (execvp(tokens[0], tokens) == -1) {
@@ -209,21 +121,94 @@ void process_child_process(char **tokens) {
     }
 }
 
-char *get_environment() {
-    return getenv("PATH");
-}
+/**
+ * Functions for commands
+ */
 
-void set_environment(char *environment) {
-    setenv("PATH", environment, 1);
-}
+// keywords that map commands to functions
+char *commands_calls[] = {
+        "getpath",
+        "setpath",
+        "cd"
+};
 
-char *get_home_dir() {
-    return getenv("HOME");
-}
+// array of function pointers :)
+int (*commands[])(char **) = {
+        &getpath,
+        &setpath,
+        &cd
+};
 
-void set_cwd(char *dir) {
-    // current working directory
-    if (chdir(dir) == -1) {
-        perror("Error");
+// returns the index of function or -1 if command is not a function
+int is_command(char *command) {
+    int num_of_commands = sizeof(commands_calls) / sizeof(char *);
+    for (int i = 0; i < num_of_commands; i++) {
+        if (strcmp(command, commands_calls[i]) == 0)
+            return i;
     }
+    return -1;
+}
+
+// executes a command with provided arguments
+int exec_command(int command, char **tokens) {
+    commands[command](tokens);
+    return 0;
+}
+
+// return how many arguments are in the tokens array
+int get_number_of_args(char **tokens) {
+    int length = 0;
+    while (tokens[length] != NULL) {
+        length++;
+    }
+    return length - 1;
+}
+
+// helper function
+int is_path_valid(char* path) {
+    char cwd[256];
+    getcwd(cwd, 255);
+    if(chdir(path) == 0) {
+        chdir(cwd);
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+// shell command - prints PATH environmental variable on the screen
+int getpath(char **args) {
+    if (get_number_of_args(args) > 0) {
+        printf("This command doesn't take any arguments\n");
+    } else {
+        printf("%s\n", getenv("PATH"));
+    }
+    return 0;
+}
+
+// shell command - sets PATH environmental variable
+int setpath(char **args) {
+    if (get_number_of_args(args) != 1) {
+        printf("This command takes exactly one argument\n");
+    } else if (is_path_valid(args[1]))
+      setenv("PATH", args[1], 1);
+    else {
+        printf("Provided path has invalid format. Path should be "
+               "a string of system paths separated by a comma\n");
+    }
+    return 0;
+}
+
+// shell command - changes current working directory to the provided path
+// without arguments it takes user to home directory
+int cd(char **args) {
+    if (get_number_of_args(args) == 0) {
+        chdir(getenv("HOME"));
+    } else if ( get_number_of_args(args) == 1 &&
+                chdir(args[1]) == -1 ) {
+        perror("Error");
+    } else {
+        printf("This command take either no or one argument: a path on the system\n");
+    }
+    return 1;
 }

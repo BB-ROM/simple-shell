@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include "prompt.h"
 
 #define INPUT_SIZE 512
@@ -11,13 +13,13 @@ int main() {
     // and set cwd to users home directory
     char input[INPUT_SIZE];
     char* tokens[TOKENS_SIZE] = {"0"};
-    char* env = get_environment();
-    set_cwd(get_home_dir());
+    char* env = getenv("PATH");
+    chdir(getenv("HOME"));
     int command;
 
     while(1) {
         print_prompt();
-        get_input(input, INPUT_SIZE);
+        fgets(input, INPUT_SIZE, stdin);
 
         // exits for ctrl+d
         if(feof(stdin) != 0){
@@ -43,7 +45,7 @@ int main() {
     }
 
     // terminate shell
-    set_environment(env);
-    printf("%s\n", get_environment()); // remove after testing - DEBUG
+    setenv("PATH", env, 1);
+    printf("%s\n", getenv("PATH")); // remove after testing - DEBUG
     return 0;
 }
