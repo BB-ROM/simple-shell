@@ -1,8 +1,8 @@
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include "prompt.h"
-#include "processing.h"
-#include "commands.h"
-
 
 #define INPUT_SIZE 512
 #define TOKENS_SIZE 50
@@ -13,16 +13,16 @@ int main() {
     // and set cwd to users home directory
     char input[INPUT_SIZE];
     char* tokens[TOKENS_SIZE] = {"0"};
-    char* env = get_environment();
-    set_cwd(get_home_dir());
+    char* env = getenv("PATH");
+    chdir(getenv("HOME"));
     int command;
 
     while(1) {
         print_prompt();
-        get_input(input, INPUT_SIZE);
+        fgets(input, INPUT_SIZE, stdin);
 
         // exits for ctrl+d
-        if(ctrl_d_typed()) {
+        if(feof(stdin) != 0){
             printf("\n");
             break;
         }
@@ -32,7 +32,7 @@ int main() {
             continue;
 
         // handling of exit
-        if (check_for_exit(tokens)) // we could make it a command like others
+        if(strcmp(tokens[0], "exit") == 0)
             break;
 
         // process command
@@ -45,7 +45,7 @@ int main() {
     }
 
     // terminate shell
-    set_environment(env);
-    printf("%s\n", get_environment()); // remove after testing - DEBUG
+    setenv("PATH", env, 1);
+    printf("%s\n", getenv("PATH")); // remove after testing - DEBUG
     return 0;
 }
