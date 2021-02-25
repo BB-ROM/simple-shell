@@ -44,6 +44,19 @@ void remove_leading_whitespace(char *input) {
 
 // returns 0 if tokens can't be extracted from input and 1 if successful
 int get_tokens(char **tokens, int size, char *input) {
+    // checking for input too long or EOF
+    if (input[strlen(input) - 1] != '\n') {
+        if (strlen(input) > INPUT_SIZE) {
+            clear_stdin();
+            printf("Input too large - default max character limit is 512 "
+               "characters (can be changed in config file)\n");
+            return 0;
+        }
+        else {
+            printf("\n");
+            return -1;
+        }
+    }
 
     // leading white space is useless
     remove_leading_whitespace(input);
@@ -52,18 +65,10 @@ int get_tokens(char **tokens, int size, char *input) {
         return 0;
     }
 
-    // strings need \n to check for correct length
-    if (input[strlen(input) - 1] != '\n') {
-        clear_stdin();
-        printf("Input too large - default max character limit is 512 "
-               "characters (can be changed in config file)");
-        return 0;
-    }
-
     // \n at the end of string could potentially interfere with the commands - has to be stripped
     remove_trailing_new_line(input);
     if (!store_tokens(tokens, size, input)) {
-        printf("Too many tokens - 50 is the maximum number of tokens user can input");
+        printf("Too many tokens - 50 is the maximum number of tokens user can input\n");
         return 0;
     }
 
@@ -98,7 +103,7 @@ int fork_process(char **tokens) {
 
     // unsuccessful
     if (pid < 0) {
-        printf("Fork Failed");
+        printf("Fork Failed\n");
         return 1;
     }
         // child process
@@ -191,7 +196,7 @@ int setpath(char **args) {
     if (get_number_of_args(args) != 1) {
         printf("This command takes exactly one argument\n");
     } else if (is_path_valid(args[1]))
-      setenv("PATH", args[1], 1);
+        setenv("PATH", args[1], 1);
     else {
         printf("Provided path has invalid format. Path should be "
                "a string of system paths separated by a comma\n");

@@ -1,3 +1,6 @@
+#define INPUT_SIZE 512
+#define TOKENS_SIZE 50
+
 void print_prompt();
 void clear_stdin();
 void remove_trailing_new_line(char *string);

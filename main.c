@@ -4,9 +4,6 @@
 #include <unistd.h>
 #include "prompt.h"
 
-#define INPUT_SIZE 512
-#define TOKENS_SIZE 50
-
 int main() {
 
     // initialise state variables, get current PATH
@@ -16,16 +13,14 @@ int main() {
     char* env = getenv("PATH");
     chdir(getenv("HOME"));
     int command;
-
     while(1) {
         print_prompt();
-        fgets(input, INPUT_SIZE, stdin);
+        fflush(stdout);
+        read(STDIN_FILENO, input, INPUT_SIZE);
 
-        // exits for ctrl+d
-        if(feof(stdin) != 0){
-            printf("\n");
+        // handling ctrl+d
+        if(get_tokens(tokens, TOKENS_SIZE, input) == -1)
             break;
-        }
 
         // get tokens from the input
         if(!get_tokens(tokens, TOKENS_SIZE, input))
