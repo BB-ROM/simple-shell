@@ -18,3 +18,9 @@ int getpath(char** args);
 int setpath(char** args);
 int cd(char** args);
 
+//history
+void create_history();
+void history_commands(char* input);
+void print_history();
+void free_history(); 
+

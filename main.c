@@ -16,11 +16,13 @@ int main() {
     char* env = getenv("PATH");
     chdir(getenv("HOME"));
     int command;
+    create_history(); 
 
     while(1) {
         print_prompt();
         fgets(input, INPUT_SIZE, stdin);
-
+	history_commands(input);
+	print_history(); 
         // exits for ctrl+d
         if(feof(stdin) != 0){
             printf("\n");
@@ -45,6 +47,7 @@ int main() {
     }
 
     // terminate shell
+    free_history(); 
     setenv("PATH", env, 1);
     printf("%s\n", getenv("PATH")); // remove after testing - DEBUG
     return 0;
