@@ -5,7 +5,7 @@
 #include <wait.h>
 
 #include "prompt.h"
-
+//
 void print_prompt() {
     char arr[256];
     getcwd(arr, 255);
