@@ -5,10 +5,6 @@
 #include <wait.h>
 
 #include "prompt.h"
-#define HISTORYSIZE 20 
-
-char** historyCommands;
-int historyCounter=0; 
 
 void print_prompt() {
     char arr[256];
@@ -216,33 +212,3 @@ int cd(char **args) {
     }
     return 1;
 }
-
-void create_history() {
-  historyCommands = ((char**)malloc(20*sizeof(char*)));
-
-  for (int i=0; i<20; i++) {
-    historyCommands[i] = (char*)malloc(50*sizeof(char)); 
-  }
-}
-
-void history_commands(char* input) {
-   sprintf(historyCommands[historyCounter], input);
-   historyCounter = (historyCounter+1)%HISTORYSIZE; 
-}
-
-void print_history() {
-  int i=0;
-  while(historyCommands[i] != NULL) {
-    printf("{%s}\n", historyCommands[i]);
-    i++; 
-  }
-}
-
-void free_history() {
-  free(historyCommands);
-  for (int i=0; i<20; i++) {
-    free(historyCommands[i]); 
-  }
-}
-
-
