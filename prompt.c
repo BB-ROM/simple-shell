@@ -1,10 +1,12 @@
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <wait.h>
-
 #include "prompt.h"
+
+char* aliases[ALIAS_MAX][2];
 
 void print_prompt() {
     char arr[256];
@@ -134,14 +136,16 @@ void process_child_process(char **tokens) {
 char *commands_calls[] = {
         "getpath",
         "setpath",
-        "cd"
+        "cd",
+        "alias"
 };
 
 // array of function pointers :)
 int (*commands[])(char **) = {
         &getpath,
         &setpath,
-        &cd
+        &cd,
+        &alias
 };
 
 // returns the index of function or -1 if command is not a function
@@ -217,3 +221,130 @@ int cd(char **args) {
     }
     return 1;
 }
+
+int alias(char **args) {
+    int count_null = 0;
+    char *alias_name = args[1];
+    char command[INPUT_SIZE] = "";
+    int count_tokens = 0;
+    bool exists = false;
+
+    //counts number of null elements of alias array
+    for (int i = 0; i < ALIAS_MAX; i++){
+        if(aliases[i][0] == NULL){
+            count_null = count_null + 1;
+        }
+    }
+    
+    //checks to see if alias already entered and shows what aliases exists or says there are none
+    if (args[1] == NULL){
+        if(count_null == ALIAS_MAX) {
+            printf("There are no aliases to list\n");
+        } else {
+            for (int i = 0; (i < (ALIAS_MAX-count_null)); i++){
+                printf("%s\t%s \n", aliases[i][0], aliases[i][1]);
+            }
+        }
+        return 0;
+    } else {
+        //will prompt for parameters if there has been an incorrect input
+        if(args[2] == NULL){
+            printf("Incorrect parameters entered for alias. Specify <""second command"">\n");
+            return 0;
+        }
+    }
+
+    alias_name = args[1];
+    count_tokens = 0;
+
+    strcat(command, args[2]);
+
+    // checks how many tokens are in the array
+    while (args[count_tokens+3] != NULL) {
+        count_tokens++;
+    }
+
+    //concatenates all the tokens excluding the alias and command to be created 
+    for (int i = 0; i < count_tokens; i++) {
+        strcat(command, " ");
+        strcat(command, args[i+2]);
+    }
+
+    //appends a null character to the end of the string.allows aliased commands to function like any other command in use
+    strcat(command, "\0");
+    
+    //ensures no duplication of existing aliases by overwriting, warns user this has been done.
+    for (int i = 0; i < (ALIAS_MAX-count_null); i++) {
+        if(strcmp(alias_name, aliases[i][0]) == 0) {
+            printf("Alias already exists. Overwriting.\n");
+            aliases[i][1] = strdup(command);
+            exists = true;
+        }
+    }
+
+    //if there are too many aliases in existence, warns user no more can be added
+    if((count_null == 0) && (exists == false)) {
+        printf("No more aliases can be added \n");
+    }
+    else {
+        //adds the alias to the Array if it is not already there
+        if ((exists == false) && (count_null != 0)) {
+            aliases[ALIAS_MAX-count_null][0] = strdup(alias_name);
+            aliases[ALIAS_MAX-count_null][1] = strdup(command);
+        }
+    }
+
+    return 0;
+}
+
+/*
+int unalias(char* tokens[TOKENS_SIZE], char* alias[ALIAS_MAX][2]){
+    int i; int index;
+    char* command;
+    bool found;
+
+    // checks inputs
+    if (tokens[1] == NULL){
+        printf("Error: No alias provided. \n");
+        return;
+    }
+
+    if(tokens[2]!=NULL){
+        printf("Error: Too many values provided. \n");
+        return;
+    }
+
+    command = tokens[1];
+    found = false;
+
+    //searches through the alias array for the value to be removed
+    for (i = 0; i < ALIAS_MAX; i++){
+        if (alias[i][0] != NULL){
+            if(strcmp(command, alias[i][0]) == true){
+                alias[i][0] = NULL;
+                alias[i][1] = NULL;
+                index = i;
+                found = true;
+            }
+        }
+
+    }
+
+    //if the above search returns false, prints error to terminal, otherwise removes alias
+    if (found == false){
+        printf("Error: The alias does not exist. \n");
+        return;
+    }
+    else{
+        while(index<(ALIAS_MAX-1)){
+            alias[index][0] = alias[index+1][0];
+            alias[index][1] = alias[index+1][1];
+            index++;
+        }
+        alias[ALIAS_MAX-1][0] = NULL;
+        alias[ALIAS_MAX-1][1] = NULL;
+    }
+    return 0;
+}
+
+*/

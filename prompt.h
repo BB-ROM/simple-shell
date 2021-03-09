@@ -1,5 +1,6 @@
 #define INPUT_SIZE 512
 #define TOKENS_SIZE 50
+#define ALIAS_MAX 2
 
 void print_prompt();
 void clear_stdin();
@@ -20,4 +21,5 @@ int is_path_valid(char* path);
 int getpath(char** args);
 int setpath(char** args);
 int cd(char** args);
+int alias(char** args);
 
