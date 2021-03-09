@@ -13,11 +13,21 @@ int main() {
     char* env = getenv("PATH");
     chdir(getenv("HOME"));
     int command;
+    int tokens_flag;
     while(1) {
+        memset(input, 0, sizeof input);
         print_prompt();
         fflush(stdout);
         read(STDIN_FILENO, input, INPUT_SIZE);
 
+        tokens_flag = get_tokens(tokens, TOKENS_SIZE, input);
+        if(tokens_flag == -1) {
+            break;
+        } else if(tokens_flag == 0) {
+            continue;
+        }
+
+        /*
         // handling ctrl+d
         if(get_tokens(tokens, TOKENS_SIZE, input) == -1)
             break;
@@ -25,6 +35,7 @@ int main() {
         // get tokens from the input
         if(!get_tokens(tokens, TOKENS_SIZE, input))
             continue;
+        */
 
         // handling of exit
         if(strcmp(tokens[0], "exit") == 0)

@@ -46,7 +46,7 @@ void remove_leading_whitespace(char *input) {
 int get_tokens(char **tokens, int size, char *input) {
     // checking for input too long or EOF
     if (input[strlen(input) - 1] != '\n') {
-        if (strlen(input) > INPUT_SIZE) {
+        if (strlen(input) > INPUT_SIZE - 1) {
             clear_stdin();
             printf("Input too large - default max character limit is 512 "
                "characters (can be changed in config file)\n");
@@ -57,7 +57,7 @@ int get_tokens(char **tokens, int size, char *input) {
             return -1;
         }
     }
-
+    
     // leading white space is useless
     remove_leading_whitespace(input);
     // is input empty
@@ -195,9 +195,9 @@ int getpath(char **args) {
 int setpath(char **args) {
     if (get_number_of_args(args) != 1) {
         printf("This command takes exactly one argument\n");
-    } else if (is_path_valid(args[1]))
+    } else if (is_path_valid(args[1])) {
         setenv("PATH", args[1], 1);
-    else {
+    } else {
         printf("Provided path has invalid format. Path should be "
                "a string of system paths separated by a comma\n");
     }
