@@ -44,40 +44,6 @@ void remove_leading_whitespace(char *input) {
     }
 }
 
-// returns 0 if tokens can't be extracted from input and 1 if successful
-int get_tokens(char **tokens, int size, char *input) {
-    // checking for input too long or EOF
-    if (input[strlen(input) - 1] != '\n') {
-        if (strlen(input) > INPUT_SIZE - 1) {
-            clear_stdin();
-            printf("Input too large - default max character limit is 512 "
-               "characters (can be changed in config file)\n");
-            return 0;
-        }
-        else {
-            printf("\n");
-            return -1;
-        }
-    }
-    
-    // leading white space is useless
-    remove_leading_whitespace(input);
-    // is input empty
-    if (strlen(input) - 1 == 0) {
-        return 0;
-    }
-
-    // \n at the end of string could potentially interfere with the commands - has to be stripped
-    remove_trailing_new_line(input);
-    if (!store_tokens(tokens, size, input)) {
-        printf("Too many tokens - 50 is the maximum number of tokens user can input\n");
-        return 0;
-    }
-
-    //string is correct
-    return 1;
-}
-
 // stores individual tokens from input to provided
 // tokens array - max is 50
 // returns 0 if unsuccessful
@@ -97,6 +63,49 @@ int store_tokens(char **tokens, int size, char *input) {
     // last token should be null to work with exec()
     tokens[i] = NULL;
     return 1;
+}
+
+// returns 0 if tokens can't be extracted from input and 1 if successful
+int get_tokens(char **tokens, int size, char *input) {
+    // checking for input too long or EOF
+    if (input[strlen(input) - 1] != '\n') {
+        if (strlen(input) > INPUT_SIZE - 1) {
+            clear_stdin();
+            printf("Input too large - default max character limit is 512 "
+               "characters (can be changed in config file)\n");
+            return 0;
+        }
+        else {
+            printf("\n");
+            return -1;
+        }
+    }
+
+    // leading white space is useless
+    remove_leading_whitespace(input);
+    // is input empty
+    if (strlen(input) - 1 == 0) {
+        return 0;
+    }
+
+    // \n at the end of string could potentially interfere with the commands - has to be stripped
+    remove_trailing_new_line(input);
+    if (!store_tokens(tokens, size, input)) {
+        printf("Too many tokens - 50 is the maximum number of tokens user can input\n");
+        return 0;
+    }
+
+    //string is correct
+    return 1;
+}
+
+// helper function to take care of child processes after fork
+void process_child_process(char **tokens) {
+    // if command is an executable it runs
+    if (execvp(tokens[0], tokens) == -1) {
+        perror(tokens[0]);
+        exit(0);
+    }
 }
 
 int fork_process(char **tokens) {
@@ -119,37 +128,20 @@ int fork_process(char **tokens) {
     return 0;
 }
 
-// helper function to take care of child processes after fork
-void process_child_process(char **tokens) {
-    // if command is an executable it runs
-    if (execvp(tokens[0], tokens) == -1) {
-        perror(tokens[0]);
-        exit(0);
-    }
-}
-
 /**
  * Functions for commands
  */
 
 // keywords that map commands to functions
-char *commands_calls[] = {
-        "getpath",
-        "setpath",
-        "cd",
-        "alias"
-};
-
-// array of function pointers :)
-int (*commands[])(char **) = {
-        &getpath,
-        &setpath,
-        &cd,
-        &alias
-};
 
 // returns the index of function or -1 if command is not a function
 int is_command(char *command) {
+    char *commands_calls[] = {
+            "getpath",
+            "setpath",
+            "cd",
+            "alias"
+    };
     int num_of_commands = sizeof(commands_calls) / sizeof(char *);
     for (int i = 0; i < num_of_commands; i++) {
         if (strcmp(command, commands_calls[i]) == 0)
@@ -160,6 +152,12 @@ int is_command(char *command) {
 
 // executes a command with provided arguments
 int exec_command(int command, char **tokens) {
+    int (*commands[])(char **) = {
+            &getpath,
+            &setpath,
+            &cd,
+            &alias
+    };
     commands[command](tokens);
     return 0;
 }
@@ -213,9 +211,10 @@ int setpath(char **args) {
 int cd(char **args) {
     if (get_number_of_args(args) == 0) {
         chdir(getenv("HOME"));
-    } else if ( get_number_of_args(args) == 1 &&
-                chdir(args[1]) == -1 ) {
-        perror("Error");
+    } else if ( get_number_of_args(args) == 1 ){
+        if (chdir(args[1]) == -1 ) {
+            printf("Error, this path doesn't exist.\n");
+        }
     } else {
         printf("This command take either no or one argument: a path on the system\n");
     }
