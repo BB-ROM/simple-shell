@@ -267,7 +267,7 @@ int alias(char **args) {
     //concatenates all the tokens excluding the alias and command to be created 
     for (int i = 0; i < count_tokens; i++) {
         strcat(command, " ");
-        strcat(command, args[i+2]);
+        strcat(command, args[i+3]);
     }
 
     //appends a null character to the end of the string.allows aliased commands to function like any other command in use
