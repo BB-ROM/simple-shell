@@ -134,33 +134,6 @@ int fork_process(char **tokens) {
 
 // keywords that map commands to functions
 
-// returns the index of function or -1 if command is not a function
-int is_command(char *command) {
-    char *commands_calls[] = {
-            "getpath",
-            "setpath",
-            "cd",
-            "alias"
-    };
-    int num_of_commands = sizeof(commands_calls) / sizeof(char *);
-    for (int i = 0; i < num_of_commands; i++) {
-        if (strcmp(command, commands_calls[i]) == 0)
-            return i;
-    }
-    return -1;
-}
-
-// executes a command with provided arguments
-int exec_command(int command, char **tokens) {
-    int (*commands[])(char **) = {
-            &getpath,
-            &setpath,
-            &cd,
-            &alias
-    };
-    commands[command](tokens);
-    return 0;
-}
 
 // return how many arguments are in the tokens array
 int get_number_of_args(char **tokens) {
@@ -234,7 +207,7 @@ int alias(char **args) {
             count_null = count_null + 1;
         }
     }
-    
+
     //checks to see if alias already entered and shows what aliases exists or says there are none
     if (args[1] == NULL){
         if(count_null == ALIAS_MAX) {
@@ -263,7 +236,7 @@ int alias(char **args) {
         count_tokens++;
     }
 
-    //concatenates all the tokens excluding the alias and command to be created 
+    //concatenates all the tokens excluding the alias and command to be created
     for (int i = 0; i < count_tokens; i++) {
         strcat(command, " ");
         strcat(command, args[i+3]);
@@ -271,7 +244,7 @@ int alias(char **args) {
 
     //appends a null character to the end of the string.allows aliased commands to function like any other command in use
     strcat(command, "\0");
-    
+
     //ensures no duplication of existing aliases by overwriting, warns user this has been done.
     for (int i = 0; i < (ALIAS_MAX-count_null); i++) {
         if(strcmp(alias_name, aliases[i][0]) == 0) {
@@ -347,3 +320,30 @@ int unalias(char* tokens[TOKENS_SIZE], char* alias[ALIAS_MAX][2]){
 }
 
 */
+// returns the index of function or -1 if command is not a function
+int is_command(char *command) {
+    char *commands_calls[] = {
+            "getpath",
+            "setpath",
+            "cd",
+            "alias"
+    };
+    int num_of_commands = sizeof(commands_calls) / sizeof(char *);
+    for (int i = 0; i < num_of_commands; i++) {
+        if (strcmp(command, commands_calls[i]) == 0)
+            return i;
+    }
+    return -1;
+}
+
+// executes a command with provided arguments
+int exec_command(int command, char **tokens) {
+    int (*commands[])(char **) = {
+            &getpath,
+            &setpath,
+            &cd,
+            &alias
+    };
+    commands[command](tokens);
+    return 0;
+}

@@ -10,9 +10,4 @@ void print_tokens(char **tokens);
 int is_command(char* tokens);
 int exec_command(int command, char** args);
 
-//commands
-int getpath(char** args);
-int setpath(char** args);
-int cd(char** args);
-int alias(char** args);
 
