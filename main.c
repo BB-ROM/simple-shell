@@ -27,21 +27,11 @@ int main() {
             continue;
         }
 
-        /*
-        // handling ctrl+d
-        if(get_tokens(tokens, TOKENS_SIZE, input) == -1)
-            break;
-
-        // get tokens from the input
-        if(!get_tokens(tokens, TOKENS_SIZE, input))
-            continue;
-        */
-
         // handling of exit
-        if(strcmp(tokens[0], "exit") == 0)
+        if(strcmp(tokens[0], "exit") == 0) {
             break;
-
-        // process command
+        }
+        
         if ((command = is_command(tokens[0])) != -1) {
             exec_command(command, tokens);
         }
