@@ -65,17 +65,21 @@ int store_tokens(char **tokens, int size, char *input) {
     // handling invoking aliases
     char *in = malloc(INPUT_SIZE);
     strcpy(in, input);
-    char *token = strtok(in, DELIMITERS);
-    free(in);
+    strtok(in, DELIMITERS);
+    char *token = malloc(strlen(in));
+    strcpy(token, in);
     int i = 0;
     int index = is_alias(token);
+    // checking if the first token contains an alias name
     if(index != -1) {
+        free(in);
         in = malloc(INPUT_SIZE);
         strcat(in, aliases[index][1]);
         strcat(in, input + strlen(token));
         strcpy(input, in);
-        free(in);
     }
+    free(in);
+    free(token);
     
     token = strtok(input, DELIMITERS);
     while (token) {
