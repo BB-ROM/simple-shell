@@ -103,7 +103,7 @@ int get_tokens(char **tokens, int size, char *input) {
 void process_child_process(char **tokens) {
     // if command is an executable it runs
     if (execvp(tokens[0], tokens) == -1) {
-        perror(tokens[0]);
+        printf("%s: No such file or directory.\n", tokens[0]);
         exit(0);
     }
 }
