@@ -14,6 +14,9 @@ int main() {
     chdir(getenv("HOME"));
     int command;
     int tokens_flag;
+
+    load_aliases();
+
     while(1) {
         memset(input, 0, sizeof input);
         print_prompt();
@@ -22,6 +25,7 @@ int main() {
 
         tokens_flag = get_tokens(tokens, TOKENS_SIZE, input);
         if(tokens_flag == -1) {
+            save_aliases();
             break;
         } else if(tokens_flag == 0) {
             continue;
@@ -29,6 +33,7 @@ int main() {
 
         // handling of exit
         if(strcmp(tokens[0], "exit") == 0) {
+            save_aliases();
             break;
         }
         
