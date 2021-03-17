@@ -22,6 +22,7 @@ int main() {
 
         tokens_flag = get_tokens(tokens, TOKENS_SIZE, input);
         if(tokens_flag == -1) {
+        save_aliases;
             break;
         } else if(tokens_flag == 0) {
             continue;
@@ -29,6 +30,7 @@ int main() {
 
         // handling of exit
         if(strcmp(tokens[0], "exit") == 0) {
+        save_aliases;
             break;
         }
         
