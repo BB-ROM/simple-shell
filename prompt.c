@@ -111,6 +111,7 @@ int store_tokens(char **tokens, int size, char *input) {
     int i = 0;
     int history_index = is_history_invocation(token);
 
+    // checking if the first token is a history invokation
     if (history_index != -1) {
         printf("%d\n", history_index);
         free(in);
@@ -118,6 +119,14 @@ int store_tokens(char **tokens, int size, char *input) {
         strcat(in, historyCommands[history_index].command);
         strcpy(input, in);
     }
+    free(in);
+    in = malloc(INPUT_SIZE);
+    strcpy(in, input);
+    strtok(in, DELIMITERS);
+    free(token);
+    token = malloc(strlen(in));
+    strcpy(token, in);
+
 
     int index = is_alias(token);
     // checking if the first token contains an alias name
