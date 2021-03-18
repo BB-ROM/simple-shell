@@ -1,6 +1,7 @@
 #define INPUT_SIZE 512
 #define TOKENS_SIZE 50
 #define ALIAS_MAX 2
+#define HISTORY_SIZE 20
 
 void print_prompt();
 int fork_process(char **tokens);
