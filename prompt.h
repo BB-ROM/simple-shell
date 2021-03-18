@@ -8,3 +8,9 @@ int get_tokens(char **tokens, int size, char *input);
 void print_tokens(char **tokens);
 int is_command(char* tokens);
 int exec_command(int command, char** args);
+
+//history
+struct historyCommand {
+    int commandNumber;
+    char command[INPUT_SIZE];
+} typedef historyCommand;

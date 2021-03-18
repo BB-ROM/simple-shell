@@ -4,9 +4,15 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <wait.h>
+#include <ctype.h>
 #include "prompt.h"
 
-char* aliases[ALIAS_MAX][2];
+#define HISTORYSIZE 20
+
+int historyCounter = 0;
+int lastCommand = 0;
+char *aliases[ALIAS_MAX][2];
+struct historyCommand historyCommands[HISTORYSIZE];
 
 void print_prompt() {
     char arr[256];
@@ -48,12 +54,46 @@ void remove_leading_whitespace(char *input) {
 int is_alias(char *command) {
     for (int i = 0; i < ALIAS_MAX; i++) {
         if (aliases[i][0] != NULL) {
-            if(strcmp(command, aliases[i][0]) == 0) {
+            if (strcmp(command, aliases[i][0]) == 0) {
                 return i;
             }
         }
     }
     return -1;
+}
+
+
+int extract_int(char *string) {
+    char *p = string;
+    while (*p) { // While there are more characters to process...
+        if (isdigit(*p)) {
+// Found a number
+            long val = strtol(p, &p, 10); // Read number
+//            printf("%ld\n", val); // and print it.
+            return val;
+        } else {
+// Otherwise, move on to the next character.
+            p++;
+        }
+    }
+    return -1;
+}
+
+int is_history_invocation(char *token) {
+    if (strncmp(token, "!", 1) == 0) {
+        if (strncmp(token, "!!", 2) == 0) { //!!
+            return (historyCounter - 1) % 20;
+        } else if (strncmp(token, "!-", 2) == 0) { // !-n
+            int n = extract_int(token);
+//             printf("%d\n", n);
+            return (historyCounter + n - 1) % 20;
+        } else { // !n
+            int n = extract_int(token);
+            return (historyCounter - n) % 20;
+        }
+    } else {
+        return -1;
+    }
 }
 
 // stores individual tokens from input to provided
@@ -69,9 +109,19 @@ int store_tokens(char **tokens, int size, char *input) {
     char *token = malloc(strlen(in));
     strcpy(token, in);
     int i = 0;
+    int history_index = is_history_invocation(token);
+
+    if (history_index != -1) {
+        printf("%d\n", history_index);
+        free(in);
+        in = malloc(INPUT_SIZE);
+        strcat(in, historyCommands[history_index].command);
+        strcpy(input, in);
+    }
+
     int index = is_alias(token);
     // checking if the first token contains an alias name
-    if(index != -1) {
+    if (index != -1) {
         free(in);
         in = malloc(INPUT_SIZE);
         strcat(in, aliases[index][1]);
@@ -80,7 +130,7 @@ int store_tokens(char **tokens, int size, char *input) {
     }
     free(in);
     free(token);
-    
+
     token = strtok(input, DELIMITERS);
     while (token) {
         tokens[i] = token;
@@ -96,6 +146,16 @@ int store_tokens(char **tokens, int size, char *input) {
     return 1;
 }
 
+void put_input_in_history(char *input) {
+    if (strcmp(input, "history") != 0 &&
+        strncmp(input, "!", 1) != 0) {
+        historyCommands[historyCounter].commandNumber = lastCommand + 1;
+        strcpy(historyCommands[historyCounter].command, input);
+        historyCounter = (historyCounter + 1) % HISTORYSIZE;
+        lastCommand++;
+    }
+}
+
 // returns 0 if tokens can't be extracted from input and 1 if successful
 int get_tokens(char **tokens, int size, char *input) {
     // checking for input too long or EOF
@@ -103,10 +163,9 @@ int get_tokens(char **tokens, int size, char *input) {
         if (strlen(input) > INPUT_SIZE - 1) {
             clear_stdin();
             printf("Input too large - default max character limit is 512 "
-               "characters (can be changed in config file)\n");
+                   "characters (can be changed in config file)\n");
             return 0;
-        }
-        else {
+        } else {
             printf("\n");
             return -1;
         }
@@ -121,6 +180,9 @@ int get_tokens(char **tokens, int size, char *input) {
 
     // \n at the end of string could potentially interfere with the commands - has to be stripped
     remove_trailing_new_line(input);
+    char *input_copy = malloc(INPUT_SIZE);
+    strcpy(input_copy, input);
+    put_input_in_history(input_copy);
     if (!store_tokens(tokens, size, input)) {
         printf("Too many tokens - 50 is the maximum number of tokens user can input\n");
         return 0;
@@ -148,11 +210,11 @@ int fork_process(char **tokens) {
         printf("Fork Failed\n");
         return 1;
     }
-    // child process
+        // child process
     else if (pid == 0) {
         process_child_process(tokens);
     }
-    // parent process
+        // parent process
     else {
         wait(NULL);
     }
@@ -176,10 +238,10 @@ int get_number_of_args(char **tokens) {
 }
 
 // helper function
-int is_path_valid(char* path) {
+int is_path_valid(char *path) {
     char cwd[256];
     getcwd(cwd, 255);
-    if(chdir(path) == 0) {
+    if (chdir(path) == 0) {
         chdir(cwd);
         return 1;
     } else {
@@ -215,8 +277,8 @@ int setpath(char **args) {
 int cd(char **args) {
     if (get_number_of_args(args) == 0) {
         chdir(getenv("HOME"));
-    } else if ( get_number_of_args(args) == 1 ){
-        if (chdir(args[1]) == -1 ) {
+    } else if (get_number_of_args(args) == 1) {
+        if (chdir(args[1]) == -1) {
             printf("Error, this path doesn't exist.\n");
         }
     } else {
@@ -233,25 +295,25 @@ int alias(char **args) {
     int index;
 
     // counts number of null elements of alias array
-    for (int i = 0; i < ALIAS_MAX; i++){
-        if(aliases[i][0] == NULL){
+    for (int i = 0; i < ALIAS_MAX; i++) {
+        if (aliases[i][0] == NULL) {
             count_null = count_null + 1;
         }
     }
-    
+
     // checks to see if alias already entered and shows what aliases exists or says there are none
-    if (args[1] == NULL){
-        if(count_null == ALIAS_MAX) {
+    if (args[1] == NULL) {
+        if (count_null == ALIAS_MAX) {
             printf("There are no aliases to list\n");
         } else {
-            for (int i = 0; (i < (ALIAS_MAX-count_null)); i++){
+            for (int i = 0; (i < (ALIAS_MAX - count_null)); i++) {
                 printf("%s\t%s \n", aliases[i][0], aliases[i][1]);
             }
         }
         return 0;
     } else {
         // will prompt for parameters if there has been an incorrect input
-        if(args[2] == NULL){
+        if (args[2] == NULL) {
             printf("Incorrect parameters entered for alias. Specify <""second command"">\n");
             return 0;
         }
@@ -263,33 +325,32 @@ int alias(char **args) {
     strcat(command, args[2]);
 
     // checks how many tokens are in the array
-    while (args[count_tokens+3] != NULL) {
+    while (args[count_tokens + 3] != NULL) {
         count_tokens++;
     }
 
     // concatenates all the tokens excluding the alias and command to be created 
     for (int i = 0; i < count_tokens; i++) {
         strcat(command, " ");
-        strcat(command, args[i+3]);
+        strcat(command, args[i + 3]);
     }
 
     index = is_alias(alias_name);
-    
+
     // ensures no duplication of existing aliases by overwriting, warns user this has been done.
-    if(index != -1) {
+    if (index != -1) {
         aliases[index][1] = strdup(command);
         printf("Alias \"%s\" overwritten successfully\n", alias_name);
         return 0;
     }
 
     // if there are too many aliases in existence, warns user no more can be added
-    if(count_null == 0) {
+    if (count_null == 0) {
         printf("No more aliases can be added \n");
-    }
-    else {
+    } else {
         // adds the alias to the Array if it is not already there
-        aliases[ALIAS_MAX-count_null][0] = strdup(alias_name);
-        aliases[ALIAS_MAX-count_null][1] = strdup(command);
+        aliases[ALIAS_MAX - count_null][0] = strdup(alias_name);
+        aliases[ALIAS_MAX - count_null][1] = strdup(command);
         printf("Alias \"%s\" added succesfully\n", alias_name);
     }
 
@@ -301,13 +362,13 @@ int unalias(char **args) {
     int index;
 
     // checks if an alias name is provided
-    if(args[1] == NULL) {
+    if (args[1] == NULL) {
         printf("No alias provided\n");
         return 0;
     }
 
     // checks if any unnecessary parameters are provided
-    if(args[2] != NULL){
+    if (args[2] != NULL) {
         printf("Too many values provided\n");
         return 0;
     }
@@ -316,14 +377,14 @@ int unalias(char **args) {
     index = is_alias(alias_name);
 
     // removes alias if exists and shifts the next elements of aliases to fill the empty space
-    if(index != -1) {
-        while(index < (ALIAS_MAX-1)) {
-            aliases[index][0] = aliases[index+1][0];
-            aliases[index][1] = aliases[index+1][1];
+    if (index != -1) {
+        while (index < (ALIAS_MAX - 1)) {
+            aliases[index][0] = aliases[index + 1][0];
+            aliases[index][1] = aliases[index + 1][1];
             index++;
         }
-        aliases[ALIAS_MAX-1][0] = NULL;
-        aliases[ALIAS_MAX-1][1] = NULL;
+        aliases[ALIAS_MAX - 1][0] = NULL;
+        aliases[ALIAS_MAX - 1][1] = NULL;
         printf("Alias \"%s\" removed succesfully\n", alias_name);
         return 0;
     }
@@ -340,7 +401,8 @@ int is_command(char *command) {
             "setpath",
             "cd",
             "alias",
-            "unalias"
+            "unalias",
+            "history"
     };
     int num_of_commands = sizeof(commands_calls) / sizeof(char *);
     for (int i = 0; i < num_of_commands; i++) {
@@ -350,6 +412,13 @@ int is_command(char *command) {
     return -1;
 }
 
+int print_history(char **tokens) {
+    for (int i = 0; i < 20; i++) {
+        printf("%d.%s\n", i + 1, historyCommands[i].command);
+    }
+    return 0;
+}
+
 // executes a command with provided arguments
 int exec_command(int command, char **tokens) {
     int (*commands[])(char **) = {
@@ -357,7 +426,8 @@ int exec_command(int command, char **tokens) {
             &setpath,
             &cd,
             &alias,
-            &unalias
+            &unalias,
+            &print_history
     };
     commands[command](tokens);
     return 0;
