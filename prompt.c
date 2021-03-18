@@ -72,6 +72,7 @@ int store_tokens(char **tokens, int size, char *input) {
     int index = is_alias(token);
     // checking if the first token contains an alias name
     if(index != -1) {
+        // replaces alias with a command
         free(input_copy);
         input_copy = malloc(INPUT_SIZE);
         strcat(input_copy, aliases[index][1]);
@@ -366,13 +367,17 @@ int exec_command(int command, char **tokens) {
 
 void save_aliases() {
     FILE *file;
+    // opens the file in a write mode
     file = fopen(".aliases", "w");
 
+    // prints an error if a file is inaccessible
     if(file == NULL) {
         printf("Error: Aliases file access denied.\n");
     }
 
+    // writes aliases to the file line by line
     for (int i = 0; i < ALIAS_MAX; i++) {
+        // breaks the loop at the first empty alias
         if(aliases[i][0] == NULL) {
             break;
         }
@@ -384,8 +389,10 @@ void save_aliases() {
 
 void load_aliases() {
     FILE *file;
+    // opens the file in a read mode
     file = fopen(".aliases", "r");
 
+    // returns if the file does not exist or is inaccessible
     if(file == NULL) {
         return;
     }
@@ -399,6 +406,7 @@ void load_aliases() {
 
     index = 0;
 
+    // reads file line by line
     while(fgets(line, sizeof(line), file) != NULL && index < ALIAS_MAX) {
         get_tokens(line_tokens, TOKENS_SIZE, line);
 
@@ -413,12 +421,13 @@ void load_aliases() {
             count_tokens++;
         }
 
-        // concatenates all the tokens excluding the alias and command to be created 
+        // concentrates the command with its arguments
         for (int i = 0; i < count_tokens; i++) {
             strcat(command, " ");
             strcat(command, line_tokens[i+2]);
         }
 
+        // updates the aliases array
         aliases[index][0] = strdup(alias_name);
         aliases[index][1] = strdup(command);
 
