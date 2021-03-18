@@ -10,6 +10,7 @@
 #define HISTORYSIZE 20
 
 int historyCounter = 0;
+int historyFull = -1;
 int lastCommand = 0;
 char *aliases[ALIAS_MAX][2];
 struct historyCommand historyCommands[HISTORYSIZE];
@@ -82,14 +83,31 @@ int extract_int(char *string) {
 int is_history_invocation(char *token) {
     if (strncmp(token, "!", 1) == 0) {
         if (strncmp(token, "!!", 2) == 0) { //!!
-            return (historyCounter - 1) % 20;
-        } else if (strncmp(token, "!-", 2) == 0) { // !-n
+            if (historyFull == 0 && historyCounter - 1 == 0)
+                return HISTORYSIZE - 1;
+            return (historyCounter - 1) % HISTORYSIZE;
+        } else if (strncmp(token, "!-", 2) == 0) {//!-
             int n = extract_int(token);
-//             printf("%d\n", n);
-            return (historyCounter + n - 1) % 20;
+            if (historyFull == 0) {
+                if (n > historyCounter - 1)
+                    return historyCounter + HISTORYSIZE - (n + 1);
+                return historyCounter - (n + 1);
+            } else {
+                if (n < historyCounter)
+                    return historyCounter - (n + 1);
+                return -1;
+            }
         } else { // !n
             int n = extract_int(token);
-            return (historyCounter - n) % 20;
+            if (historyFull == 0) {
+                if (n > historyCounter - 1)
+                    return historyCounter + n - 1;
+                return historyCounter - (n + 1);
+            } else {
+                if (n < historyCounter)
+                    return n - 1;
+                return -1;
+            }
         }
     } else {
         return -1;
@@ -112,7 +130,7 @@ int store_tokens(char **tokens, int size, char *input) {
     int history_index = is_history_invocation(token);
 
     if (history_index != -1) {
-        printf("%d\n", history_index);
+        //      printf("%d\n", history_index);
         free(in);
         in = malloc(INPUT_SIZE);
         strcat(in, historyCommands[history_index].command);
@@ -151,6 +169,8 @@ void put_input_in_history(char *input) {
         strncmp(input, "!", 1) != 0) {
         historyCommands[historyCounter].commandNumber = lastCommand + 1;
         strcpy(historyCommands[historyCounter].command, input);
+        if (historyCounter + 1 > 19)
+            historyFull = 0;
         historyCounter = (historyCounter + 1) % HISTORYSIZE;
         lastCommand++;
     }
@@ -413,8 +433,20 @@ int is_command(char *command) {
 }
 
 int print_history(char **tokens) {
-    for (int i = 0; i < 20; i++) {
-        printf("%d.%s\n", i + 1, historyCommands[i].command);
+    if (historyFull == 0) {
+        int j = 1;
+        for (int i = historyCounter; i < HISTORYSIZE; i++) {
+            printf("%d.%s\n", j, historyCommands[i].command);
+            ++j;
+        }
+        for (int i = 0; i < historyCounter; i++) {
+            printf("%d.%s\n", j, historyCommands[i].command);
+            ++j;
+        }
+    } else {
+        for (int i = 0; i < historyCounter; i++) {
+            printf("%d.%s\n", i + 1, historyCommands[i].command);
+        }
     }
     return 0;
 }
