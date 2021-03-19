@@ -421,6 +421,41 @@ int is_command(char *command) {
     return -1;
 }
 
+void save_history(){
+    FILE *file;
+    //opens file to be written to
+    file = fopen(".hist_list", "w");
+
+    if(file == NULL){
+        printf("Unable to save history, a file access error occurred");
+    }
+    for(int = 0; i < HISTORYSIZE; i++){
+        fprintf(file, "\"%s\n", historyCommands[i]);
+    }
+    fclose(file);
+}
+
+void load_history()) {
+char line[INPUT_SIZE];
+FILE *file;
+// opens the file in a read mode
+file = fopen(".hist_list", "r");
+
+// returns if the file does not exist or is inaccessible
+if(file == NULL) {
+printf("No previous history found, history will be saved on exit");
+return;
+}
+
+// reads file line by line
+while(fgets(line, sizeof(line), file) != NULL && historyCounter < 20) {
+
+history[historyCounter] = strdup(strtok(line,"\n"));
+histcounter++;
+}
+fclose (file);
+}
+
 int print_history(char **tokens) {
     for (int i = 0; i < 20; i++) {
         printf("%d.%s\n", i + 1, historyCommands[i].command);
