@@ -1,18 +1,19 @@
 #include <string.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <wait.h>
 #include <ctype.h>
 #include "prompt.h"
 
-#define HISTORYSIZE 20
-
+// struct history
 int historyCounter = 0;
+int historyFull = -1;
 int lastCommand = 0;
+struct historyCommand historyCommands[HISTORY_SIZE];
+
 char *aliases[ALIAS_MAX][2];
-struct historyCommand historyCommands[HISTORYSIZE];
+
 
 void print_prompt() {
     char arr[256];
@@ -63,16 +64,15 @@ int is_alias(char *command) {
 }
 
 
-int extract_int(char *string) {
+int extract_int_from_string(char *string) {
     char *p = string;
-    while (*p) { // While there are more characters to process...
+    // until no more characters
+    while (*p) {
         if (isdigit(*p)) {
-// Found a number
-            long val = strtol(p, &p, 10); // Read number
-//            printf("%ld\n", val); // and print it.
+            // put digits into val
+            long val = strtol(p, &p, 10);
             return val;
         } else {
-// Otherwise, move on to the next character.
             p++;
         }
     }
@@ -80,23 +80,76 @@ int extract_int(char *string) {
 }
 
 int is_history_invocation(char *token) {
+    // string begins with ! - history invocation
     if (strncmp(token, "!", 1) == 0) {
-        if (strncmp(token, "!!", 2) == 0) { //!!
-            return (historyCounter - 1) % 20;
-        } else if (strncmp(token, "!-", 2) == 0) { // !-n
-            int n = extract_int(token);
-//             printf("%d\n", n);
-            return (historyCounter + n - 1) % 20;
-        } else { // !n
-            int n = extract_int(token);
-            return (historyCounter - n) % 20;
+        // !! - last command
+        if (strncmp(token, "!!", 2) == 0) {
+            int index = (historyCounter - 1) % HISTORY_SIZE;
+            if (index < 0) {
+                return index + HISTORY_SIZE;
+            } else if (index <= HISTORY_SIZE) {
+                return index;
+            } else {
+                return -1;
+            }
+            // two behaviours for full and non full history
+        } else if (historyFull == 0) {
+            // !-n invoke n to last command ex. !-1 last command, !-2 second to last command, !-20 twentieth command
+            if (strncmp(token, "!-", 2) == 0) {
+                int n = extract_int_from_string(token);
+                if (n > HISTORY_SIZE || n == 0) {
+                    return -1;
+                }
+                int index = historyCounter - n;
+                if (index < 0) {
+                    return index + HISTORY_SIZE;
+                } else if (index <= HISTORY_SIZE) {
+                    return index;
+                } else {
+                    return -1;
+                }
+            } else {
+                // !n invoke nth command from history where 20 is most recent and 1 is the oldest
+                int n = extract_int_from_string(token);
+                if (n > HISTORY_SIZE || n == 0) {
+                    return -1;
+                }
+                int index = (historyCounter - (HISTORY_SIZE - n));
+                if (index <= 0) {
+                    return index + HISTORY_SIZE - 1;
+                } else if ((HISTORY_SIZE - n) == 0) {
+                    return index - 1;
+                } else if (index < HISTORY_SIZE) {
+                    return index;
+                } else {
+                    return -1;
+                }
+            }
+            // non empty history
+        } else {
+            // !-
+            if (strncmp(token, "!-", 2) == 0) {
+                int n = extract_int_from_string(token);
+                if (n <= historyCounter && n > 0) {
+                    return historyCounter - n;
+                } else {
+                    return -1;
+                }
+            } else {
+                // !n
+                int n = extract_int_from_string(token);
+                if (n <= historyCounter && n > 0) {
+                    return n - 1;
+                } else {
+                    return -1;
+                }
+            }
         }
-    } else {
-        return -1;
     }
+    return -1;
 }
 
-// stores individual tokens from input to provided
+// substitutes from history and from aliases and tokenizes input
 // tokens array - max is 50
 // returns 0 if unsuccessful
 int store_tokens(char **tokens, int size, char *input) {
@@ -111,14 +164,14 @@ int store_tokens(char **tokens, int size, char *input) {
     int i = 0;
     int history_index = is_history_invocation(token);
 
-    // checking if the first token is a history invokation
+    // checking if the first token is a history invocation and substituting
     if (history_index != -1) {
-        printf("%d\n", history_index);
         free(in);
         in = malloc(INPUT_SIZE);
         strcat(in, historyCommands[history_index].command);
         strcpy(input, in);
     }
+    // make space for command to be split into tokens
     free(in);
     in = malloc(INPUT_SIZE);
     strcpy(in, input);
@@ -126,7 +179,6 @@ int store_tokens(char **tokens, int size, char *input) {
     free(token);
     token = malloc(strlen(in));
     strcpy(token, in);
-
 
     int index = is_alias(token);
     // checking if the first token contains an alias name
@@ -157,10 +209,13 @@ int store_tokens(char **tokens, int size, char *input) {
 
 void put_input_in_history(char *input) {
     if (strcmp(input, "history") != 0 &&
-        strncmp(input, "!", 1) != 0) {
+        strncmp(input, "!", 1) != 0 &&
+        strcmp(input, "exit") != 0) {
         historyCommands[historyCounter].commandNumber = lastCommand + 1;
         strcpy(historyCommands[historyCounter].command, input);
-        historyCounter = (historyCounter + 1) % HISTORYSIZE;
+        if (historyCounter + 1 > 19)
+            historyFull = 0;
+        historyCounter = (historyCounter + 1) % HISTORY_SIZE;
         lastCommand++;
     }
 }
@@ -338,7 +393,7 @@ int alias(char **args) {
         count_tokens++;
     }
 
-    // concatenates all the tokens excluding the alias and command to be created 
+    // concatenates all the tokens excluding the alias and command to be created
     for (int i = 0; i < count_tokens; i++) {
         strcat(command, " ");
         strcat(command, args[i + 3]);
@@ -360,7 +415,7 @@ int alias(char **args) {
         // adds the alias to the Array if it is not already there
         aliases[ALIAS_MAX - count_null][0] = strdup(alias_name);
         aliases[ALIAS_MAX - count_null][1] = strdup(command);
-        printf("Alias \"%s\" added succesfully\n", alias_name);
+        printf("Alias \"%s\" added successfully\n", alias_name);
     }
 
     return 0;
@@ -394,7 +449,7 @@ int unalias(char **args) {
         }
         aliases[ALIAS_MAX - 1][0] = NULL;
         aliases[ALIAS_MAX - 1][1] = NULL;
-        printf("Alias \"%s\" removed succesfully\n", alias_name);
+        printf("Alias \"%s\" removed successfully\n", alias_name);
         return 0;
     }
 
@@ -457,9 +512,23 @@ fclose (file);
 }
 
 int print_history(char **tokens) {
-    for (int i = 0; i < 20; i++) {
-        printf("%d.%s\n", i + 1, historyCommands[i].command);
+    if (historyFull == 0) {
+        int j = 1;
+        for (int i = historyCounter; i < HISTORY_SIZE; i++) {
+            printf("%d.%s\n", j, historyCommands[i].command);
+            ++j;
+        }
+        for (int i = 0; i < historyCounter; i++) {
+            printf("%d.%s\n", j, historyCommands[i].command);
+            ++j;
+        }
+
+    } else {
+        for (int i = 0; i < historyCounter; i++) {
+            printf("%d.%s\n", i + 1, historyCommands[i].command);
+        }
     }
+
     return 0;
 }
 
