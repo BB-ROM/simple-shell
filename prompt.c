@@ -490,25 +490,24 @@ void save_history(){
     fclose(file);
 }
 
-void load_history()) {
-char line[INPUT_SIZE];
-FILE *file;
+void load_history() {
+    char line[INPUT_SIZE];
+    FILE *file;
 // opens the file in a read mode
-file = fopen(".hist_list", "r");
+    file = fopen(".hist_list", "r");
 
 // returns if the file does not exist or is inaccessible
-if(file == NULL) {
-printf("No previous history found, history will be saved on exit");
-return;
-}
+    if (file == NULL) {
+        printf("No previous history found, history will be saved on exit");
+        return;
+    }
 
 // reads file line by line
-while(fgets(line, sizeof(line), file) != NULL && historyCounter < 20) {
-
-history[historyCounter] = strdup(strtok(line,"\n"));
-histcounter++;
-}
-fclose (file);
+    while (fgets(line, sizeof(line), file) != NULL && historyCounter < 20){
+        history[historyCounter] = strdup(strtok(line "\n"));
+        histcounter++;
+    }
+    fclose(file);
 }
 
 int print_history(char **tokens) {
