@@ -156,11 +156,11 @@ int store_tokens(char **tokens, int size, char *input) {
     char DELIMITERS[] = " \t|><&;";
 
     // handling invoking aliases
-    char *in = malloc(INPUT_SIZE);
-    strcpy(in, input);
-    strtok(in, DELIMITERS);
-    char *token = malloc(strlen(in));
-    strcpy(token, in);
+    char *input_copy = malloc(INPUT_SIZE);
+    strcpy(input_copy, input);
+    strtok(input_copy, DELIMITERS);
+    char *token = malloc(strlen(input_copy));
+    strcpy(token, input_copy);
     int i = 0;
     int history_index = is_history_invocation(token);
 
@@ -182,14 +182,15 @@ int store_tokens(char **tokens, int size, char *input) {
 
     int index = is_alias(token);
     // checking if the first token contains an alias name
-    if (index != -1) {
-        free(in);
-        in = malloc(INPUT_SIZE);
-        strcat(in, aliases[index][1]);
-        strcat(in, input + strlen(token));
-        strcpy(input, in);
+    if(index != -1) {
+        // replaces alias with a command
+        free(input_copy);
+        input_copy = malloc(INPUT_SIZE);
+        strcat(input_copy, aliases[index][1]);
+        strcat(input_copy, input + strlen(token));
+        strcpy(input, input_copy);
     }
-    free(in);
+    free(input_copy);
     free(token);
 
     token = strtok(input, DELIMITERS);
@@ -360,24 +361,25 @@ int alias(char **args) {
 
     // counts number of null elements of alias array
     for (int i = 0; i < ALIAS_MAX; i++) {
-        if (aliases[i][0] == NULL) {
-            count_null = count_null + 1;
+        if(aliases[i][0] == NULL) {
+            count_null = ALIAS_MAX - i;
+            break;
         }
     }
 
     // checks to see if alias already entered and shows what aliases exists or says there are none
     if (args[1] == NULL) {
-        if (count_null == ALIAS_MAX) {
+        if(count_null == ALIAS_MAX) {
             printf("There are no aliases to list\n");
         } else {
-            for (int i = 0; (i < (ALIAS_MAX - count_null)); i++) {
+            for (int i = 0; (i < (ALIAS_MAX-count_null)); i++) {
                 printf("%s\t%s \n", aliases[i][0], aliases[i][1]);
             }
         }
         return 0;
     } else {
         // will prompt for parameters if there has been an incorrect input
-        if (args[2] == NULL) {
+        if(args[2] == NULL) {
             printf("Incorrect parameters entered for alias. Specify <""second command"">\n");
             return 0;
         }
@@ -543,4 +545,76 @@ int exec_command(int command, char **tokens) {
     };
     commands[command](tokens);
     return 0;
+}
+
+void save_aliases() {
+    FILE *file;
+    // opens the file in a write mode
+    file = fopen(".aliases", "w");
+
+    // prints an error if a file is inaccessible
+    if(file == NULL) {
+        printf("Error: Aliases file access denied.\n");
+    }
+
+    // writes aliases to the file line by line
+    for (int i = 0; i < ALIAS_MAX; i++) {
+        // breaks the loop at the first empty alias
+        if(aliases[i][0] == NULL) {
+            break;
+        }
+        fprintf(file, "%s %s\n", aliases[i][0], aliases[i][1]);
+    }
+    
+    fclose(file);
+}
+
+void load_aliases() {
+    FILE *file;
+    // opens the file in a read mode
+    file = fopen(".aliases", "r");
+
+    // returns if the file does not exist or is inaccessible
+    if(file == NULL) {
+        return;
+    }
+
+    char line[INPUT_SIZE];
+    char* line_tokens[TOKENS_SIZE] = {"0"};
+    char *alias_name;
+    char command[INPUT_SIZE] = "";
+    int count_tokens;
+    int index;
+
+    index = 0;
+
+    // reads file line by line
+    while(fgets(line, sizeof(line), file) != NULL && index < ALIAS_MAX) {
+        get_tokens(line_tokens, TOKENS_SIZE, line);
+
+        alias_name = line_tokens[0];
+        command[0] = '\0';
+        count_tokens = 0;
+
+        strcat(command, line_tokens[1]);
+
+        // checks how many tokens are in the array
+        while (line_tokens[count_tokens+2] != NULL) {
+            count_tokens++;
+        }
+
+        // concentrates the command with its arguments
+        for (int i = 0; i < count_tokens; i++) {
+            strcat(command, " ");
+            strcat(command, line_tokens[i+2]);
+        }
+
+        // updates the aliases array
+        aliases[index][0] = strdup(alias_name);
+        aliases[index][1] = strdup(command);
+
+        index++;
+    }
+  
+    fclose(file);
 }
