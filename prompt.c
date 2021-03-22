@@ -495,9 +495,11 @@ void save_history(){
 
 void load_history() {
     char line[INPUT_SIZE];
-    FILE *file;
+    char *file;
+    FILE *fileRead;
 // opens the file in a read mode
-    file = fopen(".hist_list", "r");
+    file = strcat(getcwd(cwd,sizeof(cwd)),"/.hist_list");
+    fileRead = fopen(file, "r");
 
 // returns if the file does not exist or is inaccessible
     if (file == NULL) {
@@ -506,8 +508,9 @@ void load_history() {
     }
 
 // reads file line by line
-    while (fgets(line, sizeof(line), file) != NULL && historyCounter < 20){
+    while (fgets(line, sizeof(line), file) != NULL && (historyCounter < 20)){
         strcpy(historyCommands[historyCounter].command, strdup(strtok(line, "\n")));
+       // historyCommand[historyCounter] = strdup(strtok(line,"\n"));
         historyCounter++;
     }
     fclose(file);
