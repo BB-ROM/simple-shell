@@ -495,12 +495,9 @@ void save_history(){
 
 void load_history() {
     char line[INPUT_SIZE];
-    char *cwd = NULL;
-    char *file_path;
     FILE *file;
 // opens the file in a read mode
-    file_path = strcat(getcwd(cwd,sizeof(cwd)),"/.hist_list");
-    file = fopen(file_path, "r");
+    file = fopen(".hist_list", "r");
 
 // returns if the file does not exist or is inaccessible
     if (file == NULL) {

@@ -15,6 +15,7 @@ int main() {
     int command;
     int tokens_flag;
 
+    load_history();
     load_aliases();
 
     while(1) {
@@ -25,6 +26,7 @@ int main() {
 
         tokens_flag = get_tokens(tokens, TOKENS_SIZE, input);
         if(tokens_flag == -1) {
+            save_history();
             save_aliases();
             break;
         } else if(tokens_flag == 0) {
@@ -33,6 +35,7 @@ int main() {
 
         // handling of exit
         if(strcmp(tokens[0], "exit") == 0) {
+            save_history();
             save_aliases();
             break;
         }
