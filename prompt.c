@@ -10,10 +10,8 @@
 int historyCounter = 0;
 int historyFull = -1;
 int lastCommand = 0;
-struct historyCommand historyCommands[HISTORY_SIZE];
-
+historyCommand historyCommands[HISTORY_SIZE];
 char *aliases[ALIAS_MAX][2];
-
 
 void print_prompt() {
     char arr[256];
@@ -488,9 +486,10 @@ void save_history(){
         printf("Unable to save history, a file access error occurred");
     }
     for(int i = 0; i < HISTORY_SIZE; i++){
-        fprintf(file, "\"%s\n", historyCommands[i].command);
+        fprintf(file, "%s\n", historyCommands[i].command);
     }
     fclose(file);
+    fflush(file);
 }
 
 void load_history() {
@@ -507,11 +506,13 @@ void load_history() {
 
 // reads file line by line
     while (fgets(line, sizeof(line), file) != NULL && (historyCounter < 20)){
-        strcpy(historyCommands[historyCounter].command, strdup(strtok(line, "\n")));
-       // historyCommand[historyCounter] = strdup(strtok(line,"\n"));
+        historyCommands[historyCounter].commandNumber = historyCounter;
+        strcpy(historyCommands[historyCounter].command, line);
         historyCounter++;
     }
+
     fclose(file);
+    fflush(file);
 }
 
 int print_history(__attribute__ ((unused)) char **tokens) {
@@ -569,6 +570,7 @@ void save_aliases() {
     }
     
     fclose(file);
+    fflush(file);
 }
 
 void load_aliases() {
@@ -619,4 +621,5 @@ void load_aliases() {
     }
   
     fclose(file);
+    fflush(file);
 }
