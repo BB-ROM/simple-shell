@@ -156,6 +156,7 @@ int store_tokens(char **tokens, int size, char *input) {
     char DELIMITERS[] = " \t|><&;";
 
     // handling invoking aliases
+    char *in = malloc(INPUT_SIZE);
     char *input_copy = malloc(INPUT_SIZE);
     strcpy(input_copy, input);
     strtok(input_copy, DELIMITERS);
@@ -487,7 +488,7 @@ void save_history(){
         printf("Unable to save history, a file access error occurred");
     }
     for(int i = 0; i < HISTORY_SIZE; i++){
-        fprintf(file, "\"%s\n", historyCommands[i]);
+        fprintf(file, "\"%s\n", historyCommands[i].command);
     }
     fclose(file);
 }
@@ -506,7 +507,7 @@ void load_history() {
 
 // reads file line by line
     while (fgets(line, sizeof(line), file) != NULL && historyCounter < 20){
-        historyCommands[historyCounter] = strdup(strtok(line, "\n"));
+        strcpy(historyCommands[historyCounter].command, strdup(strtok(line, "\n")));
         historyCounter++;
     }
     fclose(file);
