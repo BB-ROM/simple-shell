@@ -477,16 +477,21 @@ int is_command(char *command) {
     return -1;
 }
 
-void save_history(){
+void save_history() {
     FILE *file;
     //opens file to be written to
     file = fopen(".hist_list", "w");
 
-    if(file == NULL){
+    if(file == NULL) {
         printf("Unable to save history, a file access error occurred");
+        fclose(file);
+        fflush(file);
+        return;
     }
-    for(int i = 0; i < HISTORY_SIZE; i++){
+    int i = 0;
+    while(historyCommands[i].commandNumber != 0 && i < 20) {
         fprintf(file, "%s\n", historyCommands[i].command);
+        i++;
     }
     fclose(file);
     fflush(file);
@@ -506,7 +511,9 @@ void load_history() {
 
 // reads file line by line
     while (fgets(line, sizeof(line), file) != NULL && (historyCounter < 20)){
-        historyCommands[historyCounter].commandNumber = historyCounter;
+        printf("ok\n");
+        remove_trailing_new_line(line);
+        historyCommands[historyCounter].commandNumber = historyCounter + 1;
         strcpy(historyCommands[historyCounter].command, line);
         historyCounter++;
     }
@@ -516,21 +523,24 @@ void load_history() {
 }
 
 int print_history(__attribute__ ((unused)) char **tokens) {
-    if (historyFull == 0) {
-        int j = 1;
-        for (int i = historyCounter; i < HISTORY_SIZE; i++) {
-            printf("%d.%s\n", j, historyCommands[i].command);
-            ++j;
-        }
-        for (int i = 0; i < historyCounter; i++) {
-            printf("%d.%s\n", j, historyCommands[i].command);
-            ++j;
-        }
+    // if (historyFull == 0) {
+    //     int j = 1;
+    //     for (int i = historyCounter; i < HISTORY_SIZE; i++) {
+    //         printf("%d.%s\n", j, historyCommands[i].command);
+    //         ++j;
+    //     }
+    //     for (int i = 0; i < historyCounter; i++) {
+    //         printf("%d.%s\n", j, historyCommands[i].command);
+    //         ++j;
+    //     }
 
-    } else {
-        for (int i = 0; i < historyCounter; i++) {
-            printf("%d.%s\n", i + 1, historyCommands[i].command);
-        }
+    // } else {
+    //     for (int i = 0; i < historyCounter; i++) {
+    //         printf("%d.%s\n", i + 1, historyCommands[i].command);
+    //     }
+    // }
+    for(int i = 0; i < 20; i++) {
+        printf("%d.%s\n", i + 1, historyCommands[i].command);
     }
 
     return 0;
