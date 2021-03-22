@@ -480,8 +480,12 @@ int is_command(char *command) {
 void save_history() {
     FILE *file;
     //opens file to be written to
-    file = fopen(".hist_list", "w");
+    char* user_home_dir_path = malloc(sizeof (char) * 256);
+    user_home_dir_path = strcat(user_home_dir_path, getenv("HOME"));
+    user_home_dir_path = strcat(user_home_dir_path, "/.hist_list");
+    printf("%s\n",user_home_dir_path);
 
+    file = fopen(user_home_dir_path, "w");
     if(file == NULL) {
         printf("Unable to save history, a file access error occurred");
         fclose(file);
@@ -501,8 +505,12 @@ void load_history() {
     char line[INPUT_SIZE];
     FILE *file;
 // opens the file in a read mode
-    file = fopen(".hist_list", "r");
-
+    char* user_home_dir_path = malloc(sizeof (char) * 256);
+    user_home_dir_path = strcat(user_home_dir_path, getenv("HOME"));
+    user_home_dir_path = strcat(user_home_dir_path, "/.hist_list");
+    printf("%s\n",user_home_dir_path);
+//     opens the file in a read mode
+    file = fopen(user_home_dir_path, "r");
 // returns if the file does not exist or is inaccessible
     if (file == NULL) {
         printf("No previous history found, history will be saved on exit");
@@ -511,7 +519,7 @@ void load_history() {
 
 // reads file line by line
     while (fgets(line, sizeof(line), file) != NULL && (historyCounter < 20)){
-        printf("ok\n");
+//         printf("ok\n");
         remove_trailing_new_line(line);
         historyCommands[historyCounter].commandNumber = historyCounter + 1;
         strcpy(historyCommands[historyCounter].command, line);
@@ -578,7 +586,7 @@ void save_aliases() {
         }
         fprintf(file, "%s %s\n", aliases[i][0], aliases[i][1]);
     }
-    
+
     fclose(file);
     fflush(file);
 }
@@ -629,7 +637,7 @@ void load_aliases() {
 
         index++;
     }
-  
+
     fclose(file);
     fflush(file);
 }
