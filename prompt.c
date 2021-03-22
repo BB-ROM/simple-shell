@@ -486,7 +486,7 @@ void save_history(){
     if(file == NULL){
         printf("Unable to save history, a file access error occurred");
     }
-    for(int = 0; i < HISTORYSIZE; i++){
+    for(int i = 0; i < HISTORY_SIZE; i++){
         fprintf(file, "\"%s\n", historyCommands[i]);
     }
     fclose(file);
@@ -506,8 +506,8 @@ void load_history() {
 
 // reads file line by line
     while (fgets(line, sizeof(line), file) != NULL && historyCounter < 20){
-        history[historyCounter] = strdup(strtok(line "\n"));
-        histcounter++;
+        historyCommands[historyCounter] = strdup(strtok(line, "\n"));
+        historyCounter++;
     }
     fclose(file);
 }
