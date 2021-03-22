@@ -492,10 +492,13 @@ void save_history() {
         fflush(file);
         return;
     }
-    int i = 0;
+    int i = historyCounter;
     while(historyCommands[i].commandNumber != 0 && i < 20) {
         fprintf(file, "%s\n", historyCommands[i].command);
         i++;
+        if(i == HISTORY_SIZE) {
+            break;
+        }
     }
     fclose(file);
     fflush(file);
@@ -518,7 +521,7 @@ void load_history() {
     }
 
 // reads file line by line
-    while (fgets(line, sizeof(line), file) != NULL && (historyCounter < 20)){
+    while (fgets(line, sizeof(line), file) != NULL && (historyCounter < HISTORY_SIZE)){
 //         printf("ok\n");
         remove_trailing_new_line(line);
         historyCommands[historyCounter].commandNumber = historyCounter + 1;
@@ -531,25 +534,25 @@ void load_history() {
 }
 
 int print_history(__attribute__ ((unused)) char **tokens) {
-    // if (historyFull == 0) {
-    //     int j = 1;
-    //     for (int i = historyCounter; i < HISTORY_SIZE; i++) {
-    //         printf("%d.%s\n", j, historyCommands[i].command);
-    //         ++j;
-    //     }
-    //     for (int i = 0; i < historyCounter; i++) {
-    //         printf("%d.%s\n", j, historyCommands[i].command);
-    //         ++j;
-    //     }
+    if (historyFull == 0) {
+        int j = 1;
+        for (int i = historyCounter; i < HISTORY_SIZE; i++) {
+            printf("%d.%s\n", j, historyCommands[i].command);
+            ++j;
+        }
+        for (int i = 0; i < historyCounter; i++) {
+            printf("%d.%s\n", j, historyCommands[i].command);
+            ++j;
+        }
 
-    // } else {
-    //     for (int i = 0; i < historyCounter; i++) {
-    //         printf("%d.%s\n", i + 1, historyCommands[i].command);
-    //     }
-    // }
-    for(int i = 0; i < 20; i++) {
-        printf("%d.%s\n", i + 1, historyCommands[i].command);
+    } else {
+        for (int i = 0; i < historyCounter; i++) {
+            printf("%d.%s\n", i + 1, historyCommands[i].command);
+        }
     }
+//     for(int i = 0; i < 20; i++) {
+//         printf("%d.%s\n", i + 1, historyCommands[i].command);
+//     }
 
     return 0;
 }
