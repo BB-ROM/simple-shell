@@ -13,7 +13,7 @@ void save_aliases();
 void load_aliases();
 
 //history
-struct historyCommand {
+typedef struct historyCommand {
     int commandNumber;
     char command[INPUT_SIZE];
-} typedef historyCommand;
+} historyCommand;
