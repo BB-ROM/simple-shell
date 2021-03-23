@@ -487,6 +487,7 @@ void save_history() {
     file = fopen(user_home_dir_path, "w");
     if(file == NULL) {
         printf("Unable to save history, a file access error occurred");
+        free(user_home_dir_path);
         fclose(file);
         fflush(file);
         return;
@@ -528,7 +529,8 @@ void load_history() {
     file = fopen(user_home_dir_path, "r");
 // returns if the file does not exist or is inaccessible
     if (file == NULL) {
-        printf("No previous history found, history will be saved on exit");
+        printf("No previous history found, history will be saved on exit.\n");
+        free(user_home_dir_path);
         return;
     }
 
