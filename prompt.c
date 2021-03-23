@@ -483,7 +483,6 @@ void save_history() {
     char* user_home_dir_path = malloc(sizeof (char) * 256);
     user_home_dir_path = strcat(user_home_dir_path, getenv("HOME"));
     user_home_dir_path = strcat(user_home_dir_path, "/.hist_list");
-    printf("%s\n",user_home_dir_path);
 
     file = fopen(user_home_dir_path, "w");
     if(file == NULL) {
@@ -500,7 +499,6 @@ void save_history() {
 //        }
 //    }
     if (historyFull == 0) {
-    //printf("%d\n", historyCounter);
         for (int i = historyCounter; i < HISTORY_SIZE; i++) {
             fprintf(file, "%s\n", historyCommands[i].command);
         }
@@ -513,19 +511,19 @@ void save_history() {
             fprintf(file, "%s\n", historyCommands[i].command);
         }
     }
+    free(user_home_dir_path);
     fclose(file);
     fflush(file);
 }
 
 void load_history() {
-    historyCounter =0; 
+    historyCounter =0;
     char line[INPUT_SIZE];
     FILE *file;
 // opens the file in a read mode
     char* user_home_dir_path = malloc(sizeof (char) * 256);
     user_home_dir_path = strcat(user_home_dir_path, getenv("HOME"));
     user_home_dir_path = strcat(user_home_dir_path, "/.hist_list");
-    printf("%s\n",user_home_dir_path);
 //     opens the file in a read mode
     file = fopen(user_home_dir_path, "r");
 // returns if the file does not exist or is inaccessible
@@ -536,16 +534,16 @@ void load_history() {
 
 // reads file line by line
     while (fgets(line, sizeof(line), file) != NULL && (historyCounter < HISTORY_SIZE)){
-//         printf("ok\n");
         remove_trailing_new_line(line);
         historyCommands[historyCounter].commandNumber = historyCounter + 1;
         strcpy(historyCommands[historyCounter].command, line);
         historyCounter++;
     }
     if (historyCounter >= 20) {
-    	historyCounter = historyCounter%20; 
-    	historyFull = 0; 
+        historyCounter = 0;
+        historyFull = 0;
     }
+    free(user_home_dir_path);
     fclose(file);
     fflush(file);
 }
@@ -596,6 +594,9 @@ void save_aliases() {
     // prints an error if a file is inaccessible
     if(file == NULL) {
         printf("Error: Aliases file access denied.\n");
+        fclose(file);
+        fflush(file);
+        return;
     }
 
     // writes aliases to the file line by line
@@ -632,7 +633,9 @@ void load_aliases() {
 
     // reads file line by line
     while(fgets(line, sizeof(line), file) != NULL && index < ALIAS_MAX) {
-        get_tokens(line_tokens, TOKENS_SIZE, line);
+        remove_trailing_new_line(line);
+        store_tokens(line_tokens, TOKENS_SIZE, line);
+//        get_tokens(line_tokens, TOKENS_SIZE, line);
 
         alias_name = line_tokens[0];
         command[0] = '\0';
@@ -661,4 +664,3 @@ void load_aliases() {
     fclose(file);
     fflush(file);
 }
-
