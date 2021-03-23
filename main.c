@@ -2,6 +2,10 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include "prompt.h"
 
 int main() {
@@ -39,7 +43,7 @@ int main() {
             save_aliases();
             break;
         }
-        
+
         if ((command = is_command(tokens[0])) != -1) {
             exec_command(command, tokens);
         }

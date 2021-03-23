@@ -492,12 +492,24 @@ void save_history() {
         fflush(file);
         return;
     }
-    int i = historyCounter;
-    while(historyCommands[i].commandNumber != 0 && i < 20) {
-        fprintf(file, "%s\n", historyCommands[i].command);
-        i++;
-        if(i == HISTORY_SIZE) {
-            break;
+//    while(historyCommands[i].commandNumber != 0 && i < 20) {
+//        fprintf(file, "%s\n", historyCommands[i].command);
+//        i++;
+//        if(i == HISTORY_SIZE) {
+//            break;
+//        }
+//    }
+    if (historyFull == 0) {
+        for (int i = historyCounter; i < HISTORY_SIZE; i++) {
+            fprintf(file, "%s\n", historyCommands[i].command);
+        }
+        for (int i = 0; i < historyCounter; i++) {
+            fprintf(file, "%s\n", historyCommands[i].command);
+        }
+
+    } else {
+        for (int i = 0; i < historyCounter; i++) {
+            fprintf(file, "%s\n", historyCommands[i].command);
         }
     }
     fclose(file);
@@ -528,7 +540,6 @@ void load_history() {
         strcpy(historyCommands[historyCounter].command, line);
         historyCounter++;
     }
-
     fclose(file);
     fflush(file);
 }
@@ -550,6 +561,7 @@ int print_history(__attribute__ ((unused)) char **tokens) {
             printf("%d.%s\n", i + 1, historyCommands[i].command);
         }
     }
+    printf("%d", historyCounter);
 //     for(int i = 0; i < 20; i++) {
 //         printf("%d.%s\n", i + 1, historyCommands[i].command);
 //     }
