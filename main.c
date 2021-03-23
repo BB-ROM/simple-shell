@@ -57,3 +57,4 @@ int main() {
     printf("%s\n", getenv("PATH")); // remove after testing - DEBUG
     return 0;
 }
+

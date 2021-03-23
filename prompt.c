@@ -500,6 +500,7 @@ void save_history() {
 //        }
 //    }
     if (historyFull == 0) {
+    //printf("%d\n", historyCounter);
         for (int i = historyCounter; i < HISTORY_SIZE; i++) {
             fprintf(file, "%s\n", historyCommands[i].command);
         }
@@ -517,6 +518,7 @@ void save_history() {
 }
 
 void load_history() {
+    historyCounter =0; 
     char line[INPUT_SIZE];
     FILE *file;
 // opens the file in a read mode
@@ -540,6 +542,10 @@ void load_history() {
         strcpy(historyCommands[historyCounter].command, line);
         historyCounter++;
     }
+    if (historyCounter >= 20) {
+    	historyCounter = historyCounter%20; 
+    	historyFull = 0; 
+    }
     fclose(file);
     fflush(file);
 }
@@ -561,7 +567,6 @@ int print_history(__attribute__ ((unused)) char **tokens) {
             printf("%d.%s\n", i + 1, historyCommands[i].command);
         }
     }
-    printf("%d", historyCounter);
 //     for(int i = 0; i < 20; i++) {
 //         printf("%d.%s\n", i + 1, historyCommands[i].command);
 //     }
@@ -656,3 +661,4 @@ void load_aliases() {
     fclose(file);
     fflush(file);
 }
+
