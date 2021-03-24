@@ -81,21 +81,25 @@ int is_history_invocation(char *token) {
     // string begins with ! - history invocation
     if (strncmp(token, "!", 1) == 0) {
         // !! - last command
-        if (strncmp(token, "!!", 2) == 0) {
+        if (strncmp(token, "!!", 2) == 0 ) {
             int index = (historyCounter - 1) % HISTORY_SIZE;
-            if (index < 0) {
+            if (historyFull != 0 && historyCounter == 0) {
+                return -1;
+            } else if (index < 0) {
                 return index + HISTORY_SIZE;
             } else if (index <= HISTORY_SIZE) {
                 return index;
             } else {
                 return -1;
             }
+
             // two behaviours for full and non full history
         } else if (historyFull == 0) {
             // !-n invoke n to last command ex. !-1 last command, !-2 second to last command, !-20 twentieth command
             if (strncmp(token, "!-", 2) == 0) {
                 int n = extract_int_from_string(token);
-                if (n > HISTORY_SIZE || n == 0) {
+                if (n > HISTORY_SIZE || n <= 0) {
+                    printf("History invocation should be !-<number>, where number is between 1 and 20.\n");
                     return -1;
                 }
                 int index = historyCounter - n;
@@ -104,12 +108,14 @@ int is_history_invocation(char *token) {
                 } else if (index <= HISTORY_SIZE) {
                     return index;
                 } else {
+                    printf("History invocation should be !<number>, where number is between 1 and 20.\n");
                     return -1;
                 }
             } else {
                 // !n invoke nth command from history where 20 is most recent and 1 is the oldest
                 int n = extract_int_from_string(token);
-                if (n > HISTORY_SIZE || n == 0) {
+                if (n > HISTORY_SIZE || n <= 0) {
+                    printf("History invocation should be !-<number>, where number is between 1 and 20.\n");
                     return -1;
                 }
                 int index = (historyCounter - (HISTORY_SIZE - n));
@@ -120,6 +126,7 @@ int is_history_invocation(char *token) {
                 } else if (index < HISTORY_SIZE) {
                     return index;
                 } else {
+                    printf("History invocation should be !<number>, where number is between 1 and 20.\n");
                     return -1;
                 }
             }
@@ -131,6 +138,11 @@ int is_history_invocation(char *token) {
                 if (n <= historyCounter && n > 0) {
                     return historyCounter - n;
                 } else {
+                    if (historyCounter == 0) {
+                        printf("History is empty, enter a command first.\n");
+                    } else {
+                        printf("History invocation should be !<number>, where number is between 0 and %d.\n", historyCounter);
+                    }
                     return -1;
                 }
             } else {
@@ -139,6 +151,11 @@ int is_history_invocation(char *token) {
                 if (n <= historyCounter && n > 0) {
                     return n - 1;
                 } else {
+                    if (historyCounter == 0) {
+                        printf("History is empty, enter a command first.\n");
+                    } else {
+                        printf("History invocation should be !<number>, where number is between 1 and %d.\n", historyCounter);
+                    }
                     return -1;
                 }
             }
@@ -158,17 +175,25 @@ int store_tokens(char **tokens, int size, char *input) {
     char *input_copy = malloc(INPUT_SIZE);
     strcpy(input_copy, input);
     strtok(input_copy, DELIMITERS);
+    char *second_token = strtok(NULL, DELIMITERS);
     char *token = malloc(strlen(input_copy));
     strcpy(token, input_copy);
+    // token contains whole input
     int i = 0;
+
     int history_index = is_history_invocation(token);
+    // returns the index of command in the array
 
     // checking if the first token is a history invocation and substituting
     if (history_index != -1) {
-        free(in);
-        in = malloc(INPUT_SIZE);
-        strcat(in, historyCommands[history_index].command);
-        strcpy(input, in);
+        if (second_token != NULL) {
+            printf("History invocations take no arguments.\n");
+        } else {
+            free(in);
+            in = malloc(INPUT_SIZE);
+            strcat(in, historyCommands[history_index].command);
+            strcpy(input, in);
+        }
     }
     // make space for command to be split into tokens
     free(in);
@@ -316,7 +341,7 @@ int is_path_valid(char *path) {
 // shell command - prints PATH environmental variable on the screen
 int getpath(char **args) {
     if (get_number_of_args(args) > 0) {
-        printf("This command doesn't take any arguments\n");
+        printf("This command doesn't take any arguments, and neither do I\n");
     } else {
         printf("%s\n", getenv("PATH"));
     }
@@ -326,7 +351,7 @@ int getpath(char **args) {
 // shell command - sets PATH environmental variable
 int setpath(char **args) {
     if (get_number_of_args(args) != 1) {
-        printf("This command takes exactly one argument\n");
+        printf("This command takes exactly one argument, please only put one ;( )\n");
     } else if (is_path_valid(args[1])) {
         setenv("PATH", args[1], 1);
     } else {
@@ -518,7 +543,7 @@ void save_history() {
 }
 
 void load_history() {
-    historyCounter =0;
+    historyCounter = 0;
     char line[INPUT_SIZE];
     FILE *file;
 // opens the file in a read mode
@@ -535,7 +560,7 @@ void load_history() {
     }
 
 // reads file line by line
-    while (fgets(line, sizeof(line), file) != NULL && (historyCounter < HISTORY_SIZE)){
+    while (fgets(line, sizeof(line), file) != NULL && (historyCounter < HISTORY_SIZE)) {
         remove_trailing_new_line(line);
         historyCommands[historyCounter].commandNumber = historyCounter + 1;
         strcpy(historyCommands[historyCounter].command, line);
@@ -590,8 +615,12 @@ int exec_command(int command, char **tokens) {
 
 void save_aliases() {
     FILE *file;
+    char* user_home_dir_path = malloc(sizeof (char) * 256);
+    user_home_dir_path = strcat(user_home_dir_path, getenv("HOME"));
+    user_home_dir_path = strcat(user_home_dir_path, "/.aliases");
+
     // opens the file in a write mode
-    file = fopen(".aliases", "w");
+    file = fopen(user_home_dir_path, "w");
 
     // prints an error if a file is inaccessible
     if(file == NULL) {
@@ -610,6 +639,7 @@ void save_aliases() {
         fprintf(file, "%s %s\n", aliases[i][0], aliases[i][1]);
     }
 
+    free(user_home_dir_path);
     fclose(file);
     fflush(file);
 }
@@ -617,7 +647,10 @@ void save_aliases() {
 void load_aliases() {
     FILE *file;
     // opens the file in a read mode
-    file = fopen(".aliases", "r");
+    char* user_home_dir_path = malloc(sizeof (char) * 256);
+    user_home_dir_path = strcat(user_home_dir_path, getenv("HOME"));
+    user_home_dir_path = strcat(user_home_dir_path, "/.aliases");
+    file = fopen(user_home_dir_path, "r");
 
     // returns if the file does not exist or is inaccessible
     if(file == NULL) {
@@ -663,6 +696,8 @@ void load_aliases() {
         index++;
     }
 
+    free(user_home_dir_path);
     fclose(file);
     fflush(file);
 }
+
