@@ -1,3 +1,11 @@
+// Group 26 Members:
+// Magdalena Veleva
+// Frazer Sandison
+// Rachael Espie
+// Aleksandra Kliaugaite
+// Bruno Romanski
+// Piotr Cichon
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
