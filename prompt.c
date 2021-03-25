@@ -82,7 +82,7 @@ int is_history_invocation(char *token) {
     if (strncmp(token, "!", 1) == 0) {
         // !! - last command
         if (strncmp(token, "!!", 2) == 0 ) {
-            int index = (historyCounter - 1) % HISTORY_SIZE;
+            int index = (historyCounter - 1) % HISTORY_SIZE; 
             if (historyFull != 0 && historyCounter == 0) {
                 return -1;
             } else if (index < 0) {
@@ -92,10 +92,10 @@ int is_history_invocation(char *token) {
             } else {
                 return -1;
             }
-
-            // two behaviours for full and non full history
+        
+        // two behaviours for full and non full history
         } else if (historyFull == 0) {
-            // !-n invoke n to last command ex. !-1 last command, !-2 second to last command, !-20 twentieth command
+        // !-n invoke n to last command ex. !-1 last command, !-2 second to last command, !-20 twentieth command
             if (strncmp(token, "!-", 2) == 0) {
                 int n = extract_int_from_string(token);
                 if (n > HISTORY_SIZE || n <= 0) {
@@ -178,12 +178,12 @@ int store_tokens(char **tokens, int size, char *input) {
     char *second_token = strtok(NULL, DELIMITERS);
     char *token = malloc(strlen(input_copy));
     strcpy(token, input_copy);
-    // token contains whole input
+    // token contains whole input 
     int i = 0;
-
+    
     int history_index = is_history_invocation(token);
     // returns the index of command in the array
-
+    
     // checking if the first token is a history invocation and substituting
     if (history_index != -1) {
         if (second_token != NULL) {
@@ -194,7 +194,7 @@ int store_tokens(char **tokens, int size, char *input) {
             strcat(in, historyCommands[history_index].command);
             strcpy(input, in);
         }
-    }
+    } 
     // make space for command to be split into tokens
     free(in);
     in = malloc(INPUT_SIZE);
@@ -543,7 +543,7 @@ void save_history() {
 }
 
 void load_history() {
-    historyCounter = 0;
+    historyCounter = 0; 
     char line[INPUT_SIZE];
     FILE *file;
 // opens the file in a read mode
@@ -567,8 +567,8 @@ void load_history() {
         historyCounter++;
     }
     if (historyCounter >= 20) {
-        historyCounter = 0;
-        historyFull = 0;
+        historyCounter = 0; 
+        historyFull = 0; 
     }
     free(user_home_dir_path);
     fclose(file);
@@ -618,7 +618,7 @@ void save_aliases() {
     char* user_home_dir_path = malloc(sizeof (char) * 256);
     user_home_dir_path = strcat(user_home_dir_path, getenv("HOME"));
     user_home_dir_path = strcat(user_home_dir_path, "/.aliases");
-
+    
     // opens the file in a write mode
     file = fopen(user_home_dir_path, "w");
 
