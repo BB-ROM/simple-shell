@@ -168,13 +168,22 @@ int is_history_invocation(char *token) {
     return -1;
 }
 
+// char** copy_tokens(char ** tokens) {
+//     int size = sizeof(tokens)/sizeof( tokens[1]);
+//     char *new[size];
+//     for(int j = 0; j < size; j++) {
+//         strcpy(new[j], tokens[j]);
+//     }
+//     return new;
+// }
+
 // substitutes from history and from aliases and tokenizes input
 // tokens array - max is 50
 // returns 0 if unsuccessful
-int store_tokens(char **tokens, int size, char *input) {
+int store_tokens(char **tokens, int size, char *input, int counter) {
     char DELIMITERS[] = " \t|><&;";
 
-    // handling invoking aliases
+    // handling invoking history
     char *in = malloc(INPUT_SIZE);
     char *input_copy = malloc(INPUT_SIZE);
     strcpy(input_copy, input);
@@ -182,7 +191,7 @@ int store_tokens(char **tokens, int size, char *input) {
     char *second_token = strtok(NULL, DELIMITERS);
     char *token = malloc(strlen(input_copy));
     strcpy(token, input_copy);
-    // token contains whole input 
+    // token contains whole input
     int i = 0;
 
     int history_index = is_history_invocation(token);
@@ -200,6 +209,8 @@ int store_tokens(char **tokens, int size, char *input) {
         }
     }
     // make space for command to be split into tokens
+    //aliases
+
     free(in);
     in = malloc(INPUT_SIZE);
     strcpy(in, input);
@@ -210,14 +221,21 @@ int store_tokens(char **tokens, int size, char *input) {
 
     int index = is_alias(token);
     // checking if the first token contains an alias name
-    if (index != -1) {
+    while (index != -1 && counter <= 3) {
         // replaces alias with a command
         free(input_copy);
         input_copy = malloc(INPUT_SIZE);
+
+        printf("%d,%d",index, counter);
         strcat(input_copy, aliases[index][1]);
+        index = is_alias(aliases[index][1]); // a b
+        counter++;
         strcat(input_copy, input + strlen(token));
+//        store_tokens(tokens, size, input_copy, ++counter);
         strcpy(input, input_copy);
+        printf("%s\n",input);
     }
+    printf("bastard\n");
     free(input_copy);
     free(token);
 
@@ -227,12 +245,19 @@ int store_tokens(char **tokens, int size, char *input) {
         i++;
         token = strtok(NULL, DELIMITERS);
         // too many tokens - segfault
-        if (i >= size - 1)
+        if (i >= size - 1){
+            free(token);
+            free(in);
+            free(input);
             return 0;
+
+        }
     }
 
     // last token should be null to work with exec()
     tokens[i] = NULL;
+    free(token);
+    free(in);
     return 1;
 }
 
@@ -278,7 +303,7 @@ int get_tokens(char **tokens, int size, char *input) {
     char *input_copy = malloc(INPUT_SIZE);
     strcpy(input_copy, input);
     put_input_in_history(input_copy);
-    if (!store_tokens(tokens, size, input)) {
+    if (!store_tokens(tokens, size, input, 0)) {
         printf("Too many tokens - 50 is the maximum number of tokens user can input\n");
         return 0;
     }
@@ -669,7 +694,7 @@ void load_aliases() {
     // reads file line by line
     while (fgets(line, sizeof(line), file) != NULL && index < ALIAS_MAX) {
         remove_trailing_new_line(line);
-        store_tokens(line_tokens, TOKENS_SIZE, line);
+        store_tokens(line_tokens, TOKENS_SIZE, line, 0);
 
         alias_name = line_tokens[0];
         command[0] = '\0';
