@@ -506,6 +506,7 @@ char* substitute_from_history(History history, char* input) {
     char* second = strtok(NULL, DELIMITERS);
 
     int history_index = is_history_invocation(history, first);
+    printf("%d\n",history_index);
 
     if (history_index != -1) {
         if (second != NULL) {
@@ -536,7 +537,6 @@ char* substitute_from_aliases(char* aliases[ALIAS_MAX][2], char* input){
         memset(out, 0, strlen(out));
         strcat(out, aliases[index][1]);
         strcat(out, input+strlen(token));
-        printf("%s\n",out);
         return out;
     }
 

@@ -47,12 +47,21 @@ int main() {
         if(hist_subs_input == NULL){
             continue;
         }
+
+        int counter = 0;
         char *alias_sub_input = substitute_from_aliases(aliases, hist_subs_input);
-        if(alias_sub_input == NULL){
-            continue;
+        while(strcmp(hist_subs_input, alias_sub_input) != 0  && counter <=3){
+//            printf("%s, %s\n",hist_subs_input, alias_sub_input);
+            hist_subs_input =  substitute_from_history(history, alias_sub_input);
+            alias_sub_input = substitute_from_aliases(aliases, hist_subs_input);
+            counter++;
         }
+
         // extract tokens from the input to be passed to exec
         char **tokens = tokenize_input(alias_sub_input);
+        if (tokens == NULL) {
+            continue;
+        }
 
         // check for exit
         if (strncmp(sanitized_input, "exit", 4) == 0) {
