@@ -64,12 +64,8 @@ char **tokenize_input(char *input) {
     char *input_copy = malloc(INPUT_SIZE); // create copy of input
     strcpy(input_copy, input);
     char *token = strtok(input_copy, DELIMITERS); // get first token out of copy
-//    char *second_token = strtok(NULL, DELIMITERS);
-//    char *token = malloc(INPUT_SIZE);
-//    strcpy(token, input_copy);
 
     int i = 0;
-//    token = strtok(input, DELIMITERS);
     while (token) {
         tokens[i] = token;
         i++;
@@ -124,9 +120,6 @@ char *sanitize_input(char *input) {
 
     // \n at the end of string could potentially interfere with the commands - has to be stripped ;(
     remove_trailing_new_line(input_copy);
-//    char *input_copy = malloc(INPUT_SIZE);
-//    strcpy(input_copy, input_copy);
-//    put_input_in_history(input_copy);
     return input_copy;
 }
 
@@ -222,7 +215,7 @@ int is_alias(char *command, char* aliases[ALIAS_MAX][2]) {
     return -1;
 }
 
-// shell command - with no argument it lists curretly saved aliases
+// shell command - with no argument it lists currently saved aliases
 // alias <name> <command with parameters> - saves an alias
 int alias(char **args, char* aliases[ALIAS_MAX][2]) {
     int count_null = 0;
@@ -368,7 +361,7 @@ void exec_command(int command, char **tokens, History history, char* aliases[ALI
                 &alias,
                 &unalias
         };
-        tokens_commands[command](tokens, aliases);
+        tokens_commands[command-4](tokens, aliases);
     }
 }
 
@@ -403,7 +396,7 @@ void store_in_history(History *history, char *input) {
         strncmp(input_copy, "!", 1) != 0 &&
         strcmp(input_copy, "exit") != 0) {
         if(history->is_full == 0){
-            memset(history->commands[history->counter],0 , sizeof (history->commands[history->counter]));
+            memset(history->commands[history->counter],0 , sizeof (char) * INPUT_SIZE);//(history->commands[history->counter]));
         }
         history->commands[history->counter] = malloc(sizeof (char) * INPUT_SIZE);
         strcpy(history->commands[history->counter], input_copy);
@@ -530,6 +523,28 @@ char* substitute_from_history(History history, char* input) {
     return input;
 }
 
+char* substitute_from_aliases(char* aliases[ALIAS_MAX][2], char* input){
+    char DELIMITERS[] = " \t|><&;";
+    char* input_copy = malloc(sizeof (char) * INPUT_SIZE);
+    strcpy(input_copy, input);
+    char* token = strtok(input_copy, DELIMITERS);
+
+    int index = is_alias(token, aliases);
+    // checking if the first token contains an alias name
+    if (index != -1) {
+        char* out = malloc(sizeof (char) * (INPUT_SIZE + strlen(aliases[index][1])));
+        memset(out, 0, strlen(out));
+        strcat(out, aliases[index][1]);
+        strcat(out, input+strlen(token));
+        printf("%s\n",out);
+        return out;
+    }
+
+    memset(input_copy, 0, strlen(input_copy));
+    free(input_copy);
+    return input;
+}
+
 void load_history(History *history) {
     char line[INPUT_SIZE];
     FILE *file;
@@ -543,21 +558,12 @@ void load_history(History *history) {
     // returns if the file does not exist or is inaccessible
     if (file == NULL) {
         printf("No previous history found, history will be saved on exit.\n");
-//        memset(user_home_dir_path, 0, strlen(user_home_dir_path));
-//        free(user_home_dir_path);
-//        return;
+
     } else {
         // reads file line by line
         while (fgets(line, sizeof(line), file) != NULL && (history->counter < HISTORY_SIZE)) {
             remove_trailing_new_line(line);
             store_in_history(history, line);
-    //        strcpy(history->commands[history->counter], line);
-    //        historyCounter++;
-    //    }
-    //    if (historyCounter >= 20) {
-    //        historyCounter = 0;
-    //        historyFull = 0;
-    //    }
         }
         fclose(file);
         fflush(file);
@@ -600,6 +606,7 @@ void save_history(History history) {
 void save_aliases(char* aliases[ALIAS_MAX][2]) {
     FILE *file;
     char *user_home_dir_path = malloc(sizeof(char) * 256);
+    memset(user_home_dir_path, 0, strlen(user_home_dir_path));
     user_home_dir_path = strcat(user_home_dir_path, getenv("HOME"));
     user_home_dir_path = strcat(user_home_dir_path, "/.aliases");
 
@@ -609,23 +616,19 @@ void save_aliases(char* aliases[ALIAS_MAX][2]) {
     // prints an error if a file is inaccessible
     if (file == NULL) {
         printf("Error: Aliases file access denied.\n");
+    } else {
+        // writes aliases to the file line by line
+        for (int i = 0; i < ALIAS_MAX; i++) {
+            // breaks the loop at the first empty alias
+            if (aliases[i][0] == NULL) {
+                break;
+            }
+            fprintf(file, "%s %s\n", aliases[i][0], aliases[i][1]);
+        }
         fclose(file);
         fflush(file);
-        return;
     }
-
-    // writes aliases to the file line by line
-    for (int i = 0; i < ALIAS_MAX; i++) {
-        // breaks the loop at the first empty alias
-        if (aliases[i][0] == NULL) {
-            break;
-        }
-        fprintf(file, "%s %s\n", aliases[i][0], aliases[i][1]);
-    }
-
     free(user_home_dir_path);
-    fclose(file);
-    fflush(file);
 }
 
 // loads aliases from .aliases file in users home directory
@@ -633,12 +636,14 @@ void load_aliases(char* aliases[ALIAS_MAX][2]) {
     FILE *file;
     // opens the file in a read mode
     char *user_home_dir_path = malloc(sizeof(char) * 256);
+    memset(user_home_dir_path, 0, strlen(user_home_dir_path));
     user_home_dir_path = strcat(user_home_dir_path, getenv("HOME"));
     user_home_dir_path = strcat(user_home_dir_path, "/.aliases");
     file = fopen(user_home_dir_path, "r");
 
     // returns if the file does not exist or is inaccessible
     if (file == NULL) {
+        printf("file unaccessible or does not exist");
         return;
     }
 

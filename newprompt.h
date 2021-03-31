@@ -9,10 +9,6 @@ typedef struct History {
     char* commands[HISTORY_SIZE];
 } History;
 
-typedef struct Aliases {
-    int i;
-} Aliases;
-
 void print_prompt();
 char* sanitize_input(char *input_copy);
 char** tokenize_input(char* input);
@@ -27,12 +23,5 @@ void save_history(History history);
 void print_history(History history);
 void save_aliases(char* aliases[ALIAS_MAX][2]);
 void load_aliases(char* aliases[ALIAS_MAX][2]);
-//int fork_process(char **tokens);
-//int is_command(char* tokens);
-//int exec_command(int command, char** args);
-//void save_history();
-//void load_history();
-//void save_aliases();
-//void load_aliases();
-//void clear_stdin();
+char* substitute_from_aliases(char* aliases[ALIAS_MAX][2], char* input);
 

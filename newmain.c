@@ -21,11 +21,11 @@ int main() {
     History history;
     history.counter = 0;
     history.is_full = -1;
-    char *aliases[ALIAS_MAX][2];
+    char *aliases[ALIAS_MAX][2] = {0};
 
     //load history and aliases
     load_history(&history);
-//    load_aliases(aliases);
+    load_aliases(aliases);
 
     while (1) {
         char *input = malloc(sizeof(char) * INPUT_SIZE);
@@ -47,12 +47,12 @@ int main() {
         if(hist_subs_input == NULL){
             continue;
         }
-//        char *alias_sub_input = substitute_from_aliases()
-        // extract tokens from the input to be passed to exec
-        char **tokens = tokenize_input(hist_subs_input);
-        if (tokens == NULL) {
+        char *alias_sub_input = substitute_from_aliases(aliases, hist_subs_input);
+        if(alias_sub_input == NULL){
             continue;
         }
+        // extract tokens from the input to be passed to exec
+        char **tokens = tokenize_input(alias_sub_input);
 
         // check for exit
         if (strncmp(sanitized_input, "exit", 4) == 0) {
@@ -71,7 +71,7 @@ int main() {
     }
 
     save_history(history);
-//    save_aliases(aliases);
+    save_aliases(aliases);
     // restore path
     setenv("PATH", env, 1);
     printf("%s\n", getenv("PATH")); // remove after testing - DEBUG
