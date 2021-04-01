@@ -204,7 +204,7 @@ void print_history(History history) {
 }
 
 // returns the index of alias or -1 if command is not an alias
-int is_alias(char *command, char* aliases[ALIAS_MAX][2]) {
+int is_alias(char *command, char *aliases[ALIAS_MAX][2]) {
     for (int i = 0; i < ALIAS_MAX; i++) {
         if (aliases[i][0] != NULL) {
             if (strcmp(command, aliases[i][0]) == 0) {
@@ -217,7 +217,7 @@ int is_alias(char *command, char* aliases[ALIAS_MAX][2]) {
 
 // shell command - with no argument it lists currently saved aliases
 // alias <name> <command with parameters> - saves an alias
-int alias(char **args, char* aliases[ALIAS_MAX][2]) {
+int alias(char **args, char *aliases[ALIAS_MAX][2]) {
     int count_null = 0;
     char *alias_name;
     char command[INPUT_SIZE] = "";
@@ -255,6 +255,14 @@ int alias(char **args, char* aliases[ALIAS_MAX][2]) {
 
     strcat(command, args[2]);
 
+    // checks many substitutions exist in alias array
+    index = is_alias(command, aliases);
+    int count = 1;
+    while (index != -1) {
+        index = is_alias(aliases[index][1], aliases);
+        ++count;
+    }
+
     // checks how many tokens are in the array
     while (args[count_tokens + 3] != NULL) {
         count_tokens++;
@@ -278,6 +286,8 @@ int alias(char **args, char* aliases[ALIAS_MAX][2]) {
     // if there are too many aliases in existence, warns user no more can be added
     if (count_null == 0) {
         printf("No more aliases can be added \n");
+    } else if (count > 3) {
+        printf("Cannot add more substitutions, the limit is 3. \n");
     } else {
         // adds the alias to the Array if it is not already there
         aliases[ALIAS_MAX - count_null][0] = strdup(alias_name);
@@ -289,7 +299,7 @@ int alias(char **args, char* aliases[ALIAS_MAX][2]) {
 }
 
 // shell command - removes an alias
-int unalias(char **args, char* aliases[ALIAS_MAX][2]) {
+int unalias(char **args, char *aliases[ALIAS_MAX][2]) {
     char *alias_name;
     int index;
 
@@ -345,7 +355,7 @@ int is_command(char *command) {
 }
 
 // executes a command with provided arguments
-void exec_command(int command, char **tokens, History history, char* aliases[ALIAS_MAX][2]) {
+void exec_command(int command, char **tokens, History history, char *aliases[ALIAS_MAX][2]) {
     if (command <= 2) {
         int (*tokens_commands[])(char **) = {
                 &getpath,
@@ -357,11 +367,11 @@ void exec_command(int command, char **tokens, History history, char* aliases[ALI
         print_history(history); // add tokens to parameters and check if there are none
 
     } else if (command <= 5) {
-        int (*tokens_commands[])(char **, char* [ALIAS_MAX][2]) = {
+        int (*tokens_commands[])(char **, char *[ALIAS_MAX][2]) = {
                 &alias,
                 &unalias
         };
-        tokens_commands[command-4](tokens, aliases);
+        tokens_commands[command - 4](tokens, aliases);
     }
 }
 
@@ -395,10 +405,11 @@ void store_in_history(History *history, char *input) {
     if (strcmp(input_copy, "history") != 0 &&
         strncmp(input_copy, "!", 1) != 0 &&
         strcmp(input_copy, "exit") != 0) {
-        if(history->is_full == 0){
-            memset(history->commands[history->counter],0 , sizeof (char) * INPUT_SIZE);//(history->commands[history->counter]));
+        if (history->is_full == 0) {
+            memset(history->commands[history->counter], 0,
+                   sizeof(char) * INPUT_SIZE);//(history->commands[history->counter]));
         }
-        history->commands[history->counter] = malloc(sizeof (char) * INPUT_SIZE);
+        history->commands[history->counter] = malloc(sizeof(char) * INPUT_SIZE);
         strcpy(history->commands[history->counter], input_copy);
 
         if (history->counter + 1 > 19)
@@ -498,22 +509,22 @@ int is_history_invocation(History history, char *token) {
     return -1;
 }
 
-char* substitute_from_history(History history, char* input) {
+char *substitute_from_history(History history, char *input) {
     char DELIMITERS[] = " \t|><&;";
-    char* input_copy = malloc(sizeof (char) * INPUT_SIZE);
+    char *input_copy = malloc(sizeof(char) * INPUT_SIZE);
     strcpy(input_copy, input);
-    char* first = strtok(input_copy, DELIMITERS);
-    char* second = strtok(NULL, DELIMITERS);
+    char *first = strtok(input_copy, DELIMITERS);
+    char *second = strtok(NULL, DELIMITERS);
 
     int history_index = is_history_invocation(history, first);
-    printf("%d\n",history_index);
+    printf("%d\n", history_index);
 
     if (history_index != -1) {
         if (second != NULL) {
             printf("History invocations take no arguments.\n");
             return NULL;
         } else {
-            char *out = malloc(sizeof (char)* INPUT_SIZE);
+            char *out = malloc(sizeof(char) * INPUT_SIZE);
             memset(out, 0, strlen(out));
             strcat(out, history.commands[history_index]);
             return out;
@@ -524,19 +535,19 @@ char* substitute_from_history(History history, char* input) {
     return input;
 }
 
-char* substitute_from_aliases(char* aliases[ALIAS_MAX][2], char* input){
+char *substitute_from_aliases(char *aliases[ALIAS_MAX][2], char *input) {
     char DELIMITERS[] = " \t|><&;";
-    char* input_copy = malloc(sizeof (char) * INPUT_SIZE);
+    char *input_copy = malloc(sizeof(char) * INPUT_SIZE);
     strcpy(input_copy, input);
-    char* token = strtok(input_copy, DELIMITERS);
+    char *token = strtok(input_copy, DELIMITERS);
 
     int index = is_alias(token, aliases);
     // checking if the first token contains an alias name
     if (index != -1) {
-        char* out = malloc(sizeof (char) * (INPUT_SIZE + strlen(aliases[index][1])));
+        char *out = malloc(sizeof(char) * (INPUT_SIZE + strlen(aliases[index][1])));
         memset(out, 0, strlen(out));
         strcat(out, aliases[index][1]);
-        strcat(out, input+strlen(token));
+        strcat(out, input + strlen(token));
         return out;
     }
 
@@ -603,7 +614,7 @@ void save_history(History history) {
     free(user_home_dir_path);
 }
 
-void save_aliases(char* aliases[ALIAS_MAX][2]) {
+void save_aliases(char *aliases[ALIAS_MAX][2]) {
     FILE *file;
     char *user_home_dir_path = malloc(sizeof(char) * 256);
     memset(user_home_dir_path, 0, strlen(user_home_dir_path));
@@ -632,7 +643,7 @@ void save_aliases(char* aliases[ALIAS_MAX][2]) {
 }
 
 // loads aliases from .aliases file in users home directory
-void load_aliases(char* aliases[ALIAS_MAX][2]) {
+void load_aliases(char *aliases[ALIAS_MAX][2]) {
     FILE *file;
     // opens the file in a read mode
     char *user_home_dir_path = malloc(sizeof(char) * 256);
@@ -659,7 +670,7 @@ void load_aliases(char* aliases[ALIAS_MAX][2]) {
     // reads file line by line
     while (fgets(line, sizeof(line), file) != NULL && index < ALIAS_MAX) {
         remove_trailing_new_line(line);
-        char** line_tokens = tokenize_input(line);
+        char **line_tokens = tokenize_input(line);
 
         alias_name = line_tokens[0];
         command[0] = '\0';
