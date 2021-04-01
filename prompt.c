@@ -225,15 +225,24 @@ int store_tokens(char **tokens, int size, char *input, int counter) {
         // replaces alias with a command
         free(input_copy);
         input_copy = malloc(INPUT_SIZE);
-
-        printf("%d,%d",index, counter);
-        strcat(input_copy, aliases[index][1]);
-        index = is_alias(aliases[index][1]); // a b
-        counter++;
-        strcat(input_copy, input + strlen(token));
+        //added this case to check if the aliased command is history invocation - magdalena
+        if(is_history_invocation(aliases[index][1]) != -1){
+            history_index = is_history_invocation(aliases[index][1]);
+            strcat(input_copy, historyCommands[history_index].command);
+            strcpy(input, input_copy);
+            printf("%s\n", input);
+            break;
+        }
+        else {
+            printf("%d,%d", index, counter);
+            strcat(input_copy, aliases[index][1]);
+            index = is_alias(aliases[index][1]); // a b
+            counter++;
+            strcat(input_copy, input + strlen(token));
 //        store_tokens(tokens, size, input_copy, ++counter);
-        strcpy(input, input_copy);
-        printf("%s\n",input);
+            strcpy(input, input_copy);
+            printf("%s\n", input);
+        }
     }
     printf("bastard\n");
     free(input_copy);
