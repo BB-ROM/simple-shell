@@ -6,20 +6,6 @@
 #include <wait.h>
 #include "newprompt.h"
 
-void print_prompt() {
-    char arr[256];
-    getcwd(arr, 255);
-    printf("[%s]%s", arr, "==> ");
-}
-
-void print_tokens(char **tokens) {
-    int i = 0;
-    while (tokens[i] != NULL) {
-        printf("%s\n", tokens[i]);
-        i++;
-    }
-}
-
 // removes leading spaces
 void remove_leading_whitespace(char *input) {
     int index, s;
@@ -53,35 +39,6 @@ int extract_int_from_string(char *string) {
     return -1;
 }
 
-// substitutes from history and from aliases and tokenizes input
-// tokens array - max is 50
-// returns 0 if unsuccessful
-char **tokenize_input(char *input) {
-    char DELIMITERS[] = " \t|><&;";
-    char **tokens = malloc(sizeof(char *) * TOKENS_SIZE);
-
-    // handling invoking history
-    char *input_copy = malloc(INPUT_SIZE); // create copy of input
-    strcpy(input_copy, input);
-    char *token = strtok(input_copy, DELIMITERS); // get first token out of copy
-
-    int i = 0;
-    while (token) {
-        tokens[i] = token;
-        i++;
-        token = strtok(NULL, DELIMITERS);
-        // too many tokens
-        if (i >= TOKENS_SIZE - 1) {
-            printf("too many tokens\n");
-            return NULL;
-        }
-    }
-
-    // last token should be null to work with exec()
-    tokens[i] = NULL;
-    return tokens;
-}
-
 void clear_stdin() {
     int c;
     while ((c = getchar()) != '\n' && c != EOF);
@@ -91,36 +48,6 @@ void remove_trailing_new_line(char *string) {
     char *new = strchr(string, '\n');
     if (new)
         *new = 0;
-}
-
-// returns a sanitized input
-char *sanitize_input(char *input) {
-    // checking for input_copy too long or EOF
-    char *input_copy = malloc(INPUT_SIZE);
-    strcpy(input_copy, input);
-
-    if (input_copy[strlen(input_copy) - 1] != '\n') {
-        if (strlen(input_copy) > INPUT_SIZE - 1) {
-            clear_stdin();
-            printf("Input too large - default max character limit is 512.\n");
-            return "";
-        } else {
-            printf("ctrld-pressed, exiting.\n");
-            return "exit";
-        }
-    }
-
-    // leading white space is useless
-    remove_leading_whitespace(input_copy);
-    // is input_copy empty
-    if (strlen(input_copy) - 1 == 0) {
-        printf("input empty\n");
-        return "";
-    }
-
-    // \n at the end of string could potentially interfere with the commands - has to be stripped ;(
-    remove_trailing_new_line(input_copy);
-    return input_copy;
 }
 
 // return how many arguments are in the tokens array
@@ -174,7 +101,7 @@ int cd(char **args) {
         chdir(getenv("HOME"));
     } else if (get_number_of_args(args) == 1) {
         if (chdir(args[1]) == -1) {
-            printf("Error, this path doesn't exist.\n");
+            printf("Error, path: %s doesn't exist.\n", args[1]);
         }
     } else {
         printf("This command take either no or one argument: a path on the system\n");
@@ -326,87 +253,6 @@ int unalias(char **args, char* aliases[ALIAS_MAX][2]) {
     return 0;
 }
 
-// returns the index of a shell command or -1 if command is not a command
-int is_command(char *command) {
-    char *commands_calls[] = {
-            "getpath",
-            "setpath",
-            "cd",
-            "history",
-            "alias",
-            "unalias"
-    };
-    int num_of_commands = sizeof(commands_calls) / sizeof(char *);
-    for (int i = 0; i < num_of_commands; i++) {
-        if (strcmp(command, commands_calls[i]) == 0)
-            return i;
-    }
-    return -1;
-}
-
-// executes a command with provided arguments
-void exec_command(int command, char **tokens, History history, char* aliases[ALIAS_MAX][2]) {
-    if (command <= 2) {
-        int (*tokens_commands[])(char **) = {
-                &getpath,
-                &setpath,
-                &cd,
-        };
-        tokens_commands[command](tokens);
-    } else if (command == 3) {
-        print_history(history); // add tokens to parameters and check if there are none
-
-    } else if (command <= 5) {
-        int (*tokens_commands[])(char **, char* [ALIAS_MAX][2]) = {
-                &alias,
-                &unalias
-        };
-        tokens_commands[command-4](tokens, aliases);
-    }
-}
-
-// forking process
-int fork_process(char **tokens) {
-    pid_t pid;
-    pid = fork();
-
-    // unsuccessful
-    if (pid < 0) {
-        printf("Fork Failed\n");
-        return 1;
-    }
-        // child process
-    else if (pid == 0) {
-        if (execvp(tokens[0], tokens) == -1) {
-            printf("%s: No such file or directory.\n", tokens[0]);
-            exit(0);
-        }
-    }
-        // parent process
-    else {
-        wait(NULL);
-    }
-    return 0;
-}
-
-void store_in_history(History *history, char *input) {
-    char *input_copy = malloc(sizeof(char) * INPUT_SIZE);
-    strcpy(input_copy, input);
-    if (strcmp(input_copy, "history") != 0 &&
-        strncmp(input_copy, "!", 1) != 0 &&
-        strcmp(input_copy, "exit") != 0) {
-        if(history->is_full == 0){
-            memset(history->commands[history->counter],0 , sizeof (char) * INPUT_SIZE);//(history->commands[history->counter]));
-        }
-        history->commands[history->counter] = malloc(sizeof (char) * INPUT_SIZE);
-        strcpy(history->commands[history->counter], input_copy);
-
-        if (history->counter + 1 > 19)
-            history->is_full = 0;
-        history->counter = (history->counter + 1) % HISTORY_SIZE;
-    }
-}
-
 // returns index of history invocation to be called or -1 if the token in not an invocation
 int is_history_invocation(History history, char *token) {
     // string begins with ! - history invocation
@@ -498,6 +344,141 @@ int is_history_invocation(History history, char *token) {
     return -1;
 }
 
+void print_prompt() {
+    char arr[256];
+    getcwd(arr, 255);
+    printf("[%s]%s", arr, "==> ");
+}
+
+char *sanitize_input(char *input) {
+    // checking for input_copy too long or EOF
+    char *input_copy = malloc(INPUT_SIZE);
+    strcpy(input_copy, input);
+
+    if (input_copy[strlen(input_copy) - 1] != '\n') {
+        if (strlen(input_copy) > INPUT_SIZE - 1) {
+            clear_stdin();
+            printf("Input too large - default max character limit is 512.\n");
+            return "";
+        } else {
+            printf("ctrld-pressed, exiting.\n");
+            return "exit";
+        }
+    }
+
+    // leading white space is useless
+    remove_leading_whitespace(input_copy);
+    // is input_copy empty
+    if (strlen(input_copy) - 1 == 0) {
+        printf("input empty\n");
+        return "";
+    }
+
+    // \n at the end of string could potentially interfere with the commands - has to be stripped ;(
+    remove_trailing_new_line(input_copy);
+    return input_copy;
+}
+
+char **tokenize_input(char *input) {
+    char DELIMITERS[] = " \t|><&;";
+    char **tokens = malloc(sizeof(char *) * TOKENS_SIZE);
+
+    // handling invoking history
+    char *input_copy = malloc(INPUT_SIZE); // create copy of input
+    strcpy(input_copy, input);
+    char *token = strtok(input_copy, DELIMITERS); // get first token out of copy
+
+    int i = 0;
+    while (token) {
+        tokens[i] = token;
+        i++;
+        token = strtok(NULL, DELIMITERS);
+        // too many tokens
+        if (i >= TOKENS_SIZE - 1) {
+            printf("too many tokens\n");
+            return NULL;
+        }
+    }
+
+    // last token should be null to work with exec()
+    tokens[i] = NULL;
+    return tokens;
+}
+
+int is_command(char *command) {
+    char *commands_calls[] = {
+            "getpath",
+            "setpath",
+            "cd",
+            "history",
+            "alias",
+            "unalias"
+    };
+    int num_of_commands = sizeof(commands_calls) / sizeof(char *);
+    for (int i = 0; i < num_of_commands; i++) {
+        if (strcmp(command, commands_calls[i]) == 0)
+            return i;
+    }
+    return -1;
+}
+
+void exec_command(int command, char **tokens, History history, char* aliases[ALIAS_MAX][2]) {
+    if (command <= 2) {
+        int (*tokens_commands[])(char **) = {
+                &getpath,
+                &setpath,
+                &cd,
+        };
+        tokens_commands[command](tokens);
+    } else if (command == 3) {
+        print_history(history); // add tokens to parameters and check if there are none
+
+    } else if (command <= 5) {
+        int (*tokens_commands[])(char **, char* [ALIAS_MAX][2]) = {
+                &alias,
+                &unalias
+        };
+        tokens_commands[command-4](tokens, aliases);
+    }
+}
+
+int fork_process(char **tokens) {
+    pid_t pid;
+    pid = fork();
+
+    // unsuccessful
+    if (pid < 0) {
+        printf("Fork Failed\n");
+        return 1;
+    }
+        // child process
+    else if (pid == 0) {
+        if (execvp(tokens[0], tokens) == -1) {
+            printf("%s: No such file or directory.\n", tokens[0]);
+            exit(0);
+        }
+    }
+        // parent process
+    else {
+        wait(NULL);
+    }
+    return 0;
+}
+
+void store_in_history(History *history, char *input) {
+    char *input_copy = malloc(sizeof(char) * INPUT_SIZE);
+    strcpy(input_copy, input);
+        if(history->is_full == 0){
+            memset(history->commands[history->counter],0 , sizeof (char) * INPUT_SIZE);//(history->commands[history->counter]));
+        }
+        history->commands[history->counter] = malloc(sizeof (char) * INPUT_SIZE);
+        strcpy(history->commands[history->counter], input_copy);
+
+        if (history->counter + 1 > 19)
+            history->is_full = 0;
+        history->counter = (history->counter + 1) % HISTORY_SIZE;
+}
+
 char* substitute_from_history(History history, char* input) {
     char DELIMITERS[] = " \t|><&;";
     char* input_copy = malloc(sizeof (char) * INPUT_SIZE);
@@ -506,7 +487,6 @@ char* substitute_from_history(History history, char* input) {
     char* second = strtok(NULL, DELIMITERS);
 
     int history_index = is_history_invocation(history, first);
-    printf("%d\n",history_index);
 
     if (history_index != -1) {
         if (second != NULL) {
@@ -568,7 +548,6 @@ void load_history(History *history) {
         fclose(file);
         fflush(file);
     }
-//    memset(user_home_dir_path, 0, strlen(user_home_dir_path));
     free(user_home_dir_path);
 }
 
@@ -603,35 +582,6 @@ void save_history(History history) {
     free(user_home_dir_path);
 }
 
-void save_aliases(char* aliases[ALIAS_MAX][2]) {
-    FILE *file;
-    char *user_home_dir_path = malloc(sizeof(char) * 256);
-    memset(user_home_dir_path, 0, strlen(user_home_dir_path));
-    user_home_dir_path = strcat(user_home_dir_path, getenv("HOME"));
-    user_home_dir_path = strcat(user_home_dir_path, "/.aliases");
-
-    // opens the file in a write mode
-    file = fopen(user_home_dir_path, "w");
-
-    // prints an error if a file is inaccessible
-    if (file == NULL) {
-        printf("Error: Aliases file access denied.\n");
-    } else {
-        // writes aliases to the file line by line
-        for (int i = 0; i < ALIAS_MAX; i++) {
-            // breaks the loop at the first empty alias
-            if (aliases[i][0] == NULL) {
-                break;
-            }
-            fprintf(file, "%s %s\n", aliases[i][0], aliases[i][1]);
-        }
-        fclose(file);
-        fflush(file);
-    }
-    free(user_home_dir_path);
-}
-
-// loads aliases from .aliases file in users home directory
 void load_aliases(char* aliases[ALIAS_MAX][2]) {
     FILE *file;
     // opens the file in a read mode
@@ -688,4 +638,40 @@ void load_aliases(char* aliases[ALIAS_MAX][2]) {
     free(user_home_dir_path);
     fclose(file);
     fflush(file);
+}
+
+void save_aliases(char* aliases[ALIAS_MAX][2]) {
+    FILE *file;
+    char *user_home_dir_path = malloc(sizeof(char) * 256);
+    memset(user_home_dir_path, 0, strlen(user_home_dir_path));
+    user_home_dir_path = strcat(user_home_dir_path, getenv("HOME"));
+    user_home_dir_path = strcat(user_home_dir_path, "/.aliases");
+
+    // opens the file in a write mode
+    file = fopen(user_home_dir_path, "w");
+
+    // prints an error if a file is inaccessible
+    if (file == NULL) {
+        printf("Error: Aliases file access denied.\n");
+    } else {
+        // writes aliases to the file line by line
+        for (int i = 0; i < ALIAS_MAX; i++) {
+            // breaks the loop at the first empty alias
+            if (aliases[i][0] == NULL) {
+                break;
+            }
+            fprintf(file, "%s %s\n", aliases[i][0], aliases[i][1]);
+        }
+        fclose(file);
+        fflush(file);
+    }
+    free(user_home_dir_path);
+}
+
+void print_tokens(char **tokens) {
+    int i = 0;
+    while (tokens[i] != NULL) {
+        printf("%s\n", tokens[i]);
+        i++;
+    }
 }

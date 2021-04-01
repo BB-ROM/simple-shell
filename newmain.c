@@ -41,31 +41,42 @@ int main() {
         if (strcmp(sanitized_input, "") == 0) {
             continue;
         }
-        store_in_history(&history, sanitized_input);
+        // check for exit
+        if (strncmp(sanitized_input, "exit", 4) == 0) {
+            break;
+        }
+//        store_in_history(&history, sanitized_input);
 
         char *hist_subs_input =  substitute_from_history(history, sanitized_input);
         if(hist_subs_input == NULL){
             continue;
         }
 
+        int belongs_to_history = 1;
         int counter = 0;
         char *alias_sub_input = substitute_from_aliases(aliases, hist_subs_input);
+        // history substitution took plase
+        if (strcmp(sanitized_input, "history") == 0 || strncmp(sanitized_input, "!", 1) == 0 ||
+            strcmp(alias_sub_input, "history") == 0 || strncmp(alias_sub_input, "!", 1) == 0) {
+            belongs_to_history = 0;
+        }
         while(strcmp(hist_subs_input, alias_sub_input) != 0  && counter <=3){
 //            printf("%s, %s\n",hist_subs_input, alias_sub_input);
             hist_subs_input =  substitute_from_history(history, alias_sub_input);
             alias_sub_input = substitute_from_aliases(aliases, hist_subs_input);
             counter++;
+            if(strcmp(alias_sub_input, "history") == 0 || strncmp(alias_sub_input, "!",1) == 0 ){
+                belongs_to_history = 0;
+            }
         }
 
+        if(belongs_to_history == 1) {
+            store_in_history(&history, sanitized_input);
+        }
         // extract tokens from the input to be passed to exec
         char **tokens = tokenize_input(alias_sub_input);
         if (tokens == NULL) {
             continue;
-        }
-
-        // check for exit
-        if (strncmp(sanitized_input, "exit", 4) == 0) {
-            break;
         }
 
         // execute the command or fork and execute the program
