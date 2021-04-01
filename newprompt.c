@@ -174,7 +174,7 @@ int cd(char **args) {
         chdir(getenv("HOME"));
     } else if (get_number_of_args(args) == 1) {
         if (chdir(args[1]) == -1) {
-            printf("Error, this path doesn't exist.\n");
+            printf("Error, %s doesn't exist.\n", args[1]);
         }
     } else {
         printf("This command take either no or one argument: a path on the system\n");
