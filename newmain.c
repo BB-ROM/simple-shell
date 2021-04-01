@@ -45,7 +45,6 @@ int main() {
         if (strncmp(sanitized_input, "exit", 4) == 0) {
             break;
         }
-//        store_in_history(&history, sanitized_input);
 
         char *hist_subs_input =  substitute_from_history(history, sanitized_input);
         if(hist_subs_input == NULL){
@@ -55,19 +54,24 @@ int main() {
         int belongs_to_history = 1;
         int counter = 0;
         char *alias_sub_input = substitute_from_aliases(aliases, hist_subs_input);
-        // history substitution took plase
+        // history substitution took place
         if (strcmp(sanitized_input, "history") == 0 || strncmp(sanitized_input, "!", 1) == 0 ||
             strcmp(alias_sub_input, "history") == 0 || strncmp(alias_sub_input, "!", 1) == 0) {
             belongs_to_history = 0;
         }
         while(strcmp(hist_subs_input, alias_sub_input) != 0  && counter <=3){
-//            printf("%s, %s\n",hist_subs_input, alias_sub_input);
-            hist_subs_input =  substitute_from_history(history, alias_sub_input);
+            hist_subs_input = substitute_from_history(history, alias_sub_input);
+            if(hist_subs_input == NULL){
+                break;
+            }
             alias_sub_input = substitute_from_aliases(aliases, hist_subs_input);
             counter++;
             if(strcmp(alias_sub_input, "history") == 0 || strncmp(alias_sub_input, "!",1) == 0 ){
                 belongs_to_history = 0;
             }
+        }
+        if(hist_subs_input == NULL){
+            continue;
         }
 
         if(belongs_to_history == 1) {
@@ -94,6 +98,6 @@ int main() {
     save_aliases(aliases);
     // restore path
     setenv("PATH", env, 1);
-    printf("%s\n", getenv("PATH")); // remove after testing - DEBUG
+    printf("%s\n", getenv("PATH"));
     return 0;
 }
