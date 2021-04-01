@@ -182,14 +182,6 @@ int alias(char **args, char *aliases[ALIAS_MAX][2]) {
 
     strcat(command, args[2]);
 
-    // checks many substitutions exist in alias array
-    index = is_alias(command, aliases);
-    int count = 1;
-    while (index != -1) {
-        index = is_alias(aliases[index][1], aliases);
-        ++count;
-    }
-
     // checks how many tokens are in the array
     while (args[count_tokens + 3] != NULL) {
         count_tokens++;
@@ -213,8 +205,6 @@ int alias(char **args, char *aliases[ALIAS_MAX][2]) {
     // if there are too many aliases in existence, warns user no more can be added
     if (count_null == 0) {
         printf("No more aliases can be added \n");
-    } else if (count > 3) {
-        printf("Cannot add more substitutions, the limit is 3. \n");
     } else {
         // adds the alias to the Array if it is not already there
         aliases[ALIAS_MAX - count_null][0] = strdup(alias_name);
