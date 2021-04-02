@@ -10,7 +10,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "newprompt.h"
+#include "prompt.h"
 
 int main() {
 

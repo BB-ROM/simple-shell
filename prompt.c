@@ -4,7 +4,7 @@
 #include <ctype.h>
 #include <stdlib.h>
 #include <wait.h>
-#include "newprompt.h"
+#include "prompt.h"
 
 // removes leading spaces
 void remove_leading_whitespace(char *input) {
