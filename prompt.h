@@ -6,7 +6,7 @@
 typedef struct History {
     int counter;
     int is_full;
-    char* commands[HISTORY_SIZE];
+    char *commands[HISTORY_SIZE];
 } History;
 
 /**
@@ -20,14 +20,14 @@ void print_prompt();
  * than INPUT_SIZE it returns null, if ctrl-d was pressed, it returns exit, otherwise
  * returns a sanitized string
  */
-char* sanitize_input(char *input_copy);
+char *sanitize_input(char *input_copy);
 
 /**
  * substitutes from history and from aliases and tokenizes input
  * @param input sanitized input to be tokenized
  * @return the a pointer to an array of tokens
  */
-char** tokenize_input(char* input);
+char **tokenize_input(char *input);
 
 
 /**
@@ -44,7 +44,7 @@ int is_command(char *command);
  * @param history command history
  * @param aliases aliases
  */
-void exec_command(int index, char **tokens, History history, char* aliases[ALIAS_MAX][2]);
+void exec_command(int index, char **tokens, History history, char *aliases[ALIAS_MAX][2]);
 
 /**
  * forks process into parent and child
@@ -66,7 +66,7 @@ void store_in_history(History *history, char *input_copy);
  * @param input sanitized input
  * @return substituted command
  */
-char* substitute_from_history(History history, char* input);
+char *substitute_from_history(History history, char *input);
 
 /**
  * performs substitution if the input is an aliased command
@@ -74,7 +74,7 @@ char* substitute_from_history(History history, char* input);
  * @param input sanitized input
  * @return substituted command
  */
-char* substitute_from_aliases(char* aliases[ALIAS_MAX][2], char* input);
+char *substitute_from_aliases(char *aliases[ALIAS_MAX][2], char *input);
 
 /**
  * loads history from .hist_list file in users home directory
@@ -92,12 +92,12 @@ void save_history(History history);
  * saves aliases into a .aliases file in users home directory
  * @param aliases
  */
-void save_aliases(char* aliases[ALIAS_MAX][2]);
+void save_aliases(char *aliases[ALIAS_MAX][2]);
 
 /**
  * load aliases from .aliases file in users home directory
  * @param aliases
  */
-void load_aliases(char* aliases[ALIAS_MAX][2]);
+void load_aliases(char *aliases[ALIAS_MAX][2]);
 
 void print_tokens(char **tokens);

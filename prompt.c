@@ -422,7 +422,7 @@ int is_command(char *command) {
     return -1;
 }
 
-void exec_command(int command, char **tokens, History history, char* aliases[ALIAS_MAX][2]) {
+void exec_command(int command, char **tokens, History history, char *aliases[ALIAS_MAX][2]) {
     if (command <= 2) {
         int (*tokens_commands[])(char **) = {
                 &getpath,
@@ -434,11 +434,11 @@ void exec_command(int command, char **tokens, History history, char* aliases[ALI
         print_history(history); // add tokens to parameters and check if there are none
 
     } else if (command <= 5) {
-        int (*tokens_commands[])(char **, char* [ALIAS_MAX][2]) = {
+        int (*tokens_commands[])(char **, char *[ALIAS_MAX][2]) = {
                 &alias,
                 &unalias
         };
-        tokens_commands[command-4](tokens, aliases);
+        tokens_commands[command - 4](tokens, aliases);
     }
 }
 
@@ -468,18 +468,19 @@ int fork_process(char **tokens) {
 void store_in_history(History *history, char *input) {
     char *input_copy = malloc(sizeof(char) * INPUT_SIZE);
     strcpy(input_copy, input);
-        if(history->is_full == 0){
-            memset(history->commands[history->counter],0 , sizeof (char) * INPUT_SIZE);//(history->commands[history->counter]));
-        }
-        history->commands[history->counter] = malloc(sizeof (char) * INPUT_SIZE);
-        strcpy(history->commands[history->counter], input_copy);
+    if (history->is_full == 0) {
+        memset(history->commands[history->counter], 0,
+               sizeof(char) * INPUT_SIZE);//(history->commands[history->counter]));
+    }
+    history->commands[history->counter] = malloc(sizeof(char) * INPUT_SIZE);
+    strcpy(history->commands[history->counter], input_copy);
 
-        if (history->counter + 1 > 19)
-            history->is_full = 0;
-        history->counter = (history->counter + 1) % HISTORY_SIZE;
+    if (history->counter + 1 > 19)
+        history->is_full = 0;
+    history->counter = (history->counter + 1) % HISTORY_SIZE;
 }
 
-char* substitute_from_history(History history, char* input) {
+char *substitute_from_history(History history, char *input) {
     char DELIMITERS[] = " \t|><&;";
     char *input_copy = malloc(sizeof(char) * INPUT_SIZE);
     strcpy(input_copy, input);
@@ -582,7 +583,7 @@ void save_history(History history) {
     free(user_home_dir_path);
 }
 
-void load_aliases(char* aliases[ALIAS_MAX][2]) {
+void load_aliases(char *aliases[ALIAS_MAX][2]) {
     FILE *file;
     // opens the file in a read mode
     char *user_home_dir_path = malloc(sizeof(char) * 256);
@@ -639,7 +640,7 @@ void load_aliases(char* aliases[ALIAS_MAX][2]) {
     fflush(file);
 }
 
-void save_aliases(char* aliases[ALIAS_MAX][2]) {
+void save_aliases(char *aliases[ALIAS_MAX][2]) {
     FILE *file;
     char *user_home_dir_path = malloc(sizeof(char) * 256);
     memset(user_home_dir_path, 0, strlen(user_home_dir_path));

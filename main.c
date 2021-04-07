@@ -29,7 +29,7 @@ int main() {
 
     while (1) {
         char *input = malloc(sizeof(char) * INPUT_SIZE);
-        memset(input, 0, sizeof (char) * INPUT_SIZE);
+        memset(input, 0, sizeof(char) * INPUT_SIZE);
         // empty stdin, clear input and print the prompt
         print_prompt();
         fflush(stdout);
@@ -46,8 +46,8 @@ int main() {
             break;
         }
 
-        char *hist_subs_input =  substitute_from_history(history, sanitized_input);
-        if(hist_subs_input == NULL){
+        char *hist_subs_input = substitute_from_history(history, sanitized_input);
+        if (hist_subs_input == NULL) {
             continue;
         }
 
@@ -59,22 +59,22 @@ int main() {
             strcmp(alias_sub_input, "history") == 0 || strncmp(alias_sub_input, "!", 1) == 0) {
             belongs_to_history = 0;
         }
-        while(strcmp(hist_subs_input, alias_sub_input) != 0  && counter <=3){
+        while (strcmp(hist_subs_input, alias_sub_input) != 0 && counter <= 3) {
             hist_subs_input = substitute_from_history(history, alias_sub_input);
-            if(hist_subs_input == NULL){
+            if (hist_subs_input == NULL) {
                 break;
             }
             alias_sub_input = substitute_from_aliases(aliases, hist_subs_input);
             counter++;
-            if(strcmp(alias_sub_input, "history") == 0 || strncmp(alias_sub_input, "!",1) == 0 ){
+            if (strcmp(alias_sub_input, "history") == 0 || strncmp(alias_sub_input, "!", 1) == 0) {
                 belongs_to_history = 0;
             }
         }
-        if(hist_subs_input == NULL){
+        if (hist_subs_input == NULL) {
             continue;
         }
 
-        if(belongs_to_history == 1) {
+        if (belongs_to_history == 1) {
             store_in_history(&history, sanitized_input);
         }
         // extract tokens from the input to be passed to exec
@@ -91,7 +91,7 @@ int main() {
             fork_process(tokens);
         }
 
-        memset(tokens, 0, sizeof (char*) * TOKENS_SIZE);
+        memset(tokens, 0, sizeof(char *) * TOKENS_SIZE);
     }
 
     save_history(history);
